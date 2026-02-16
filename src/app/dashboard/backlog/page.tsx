@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useBacklogData } from "@/lib/hooks/use-dashboard-data";
@@ -29,7 +30,7 @@ const DIMENSION_TOOLTIPS: Record<string, string> = {
   "Size Distribution": "Mix of small, medium, and large items. Healthy backlogs have a variety of sizes for sprint flexibility.",
 };
 
-export default function BacklogPage() {
+function BacklogContent() {
   const searchParams = useSearchParams();
   const boardId = searchParams.get("board") || undefined;
   const { data, error, isLoading } = useBacklogData(boardId);
@@ -276,5 +277,13 @@ function LoadingSkeleton() {
       </div>
       <div className="h-64 rounded-lg bg-gray-200" />
     </div>
+  );
+}
+
+export default function BacklogPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <BacklogContent />
+    </Suspense>
   );
 }

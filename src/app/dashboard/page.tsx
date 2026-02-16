@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSprintData } from "@/lib/hooks/use-dashboard-data";
 import { StatCard } from "./components/stat-card";
 import { ProgressBar } from "./components/progress-bar";
 import { BurndownChart } from "./components/burndown-chart";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const boardId = searchParams.get("board") || undefined;
   const { data, error, isLoading } = useSprintData(boardId);
@@ -235,5 +236,13 @@ function LoadingSkeleton() {
       </div>
       <div className="h-72 rounded-lg bg-gray-200" />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
