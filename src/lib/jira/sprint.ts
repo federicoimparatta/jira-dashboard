@@ -1,5 +1,6 @@
 import {
   fetchSprints,
+  fetchSprintsForBoard,
   fetchSprintIssues,
   fetchIssueChangelog,
   getStoryPoints,
@@ -15,16 +16,44 @@ import {
 
 export async function getActiveSprintData(): Promise<SprintData | null> {
   const config = getConfig();
-  const sprints = await fetchSprints("active");
-  if (sprints.length === 0) return null;
-
-  const sprint = sprints[0];
   const spField =
     config.storyPointsField || (await discoverAndCacheField());
   const fields = getIssueFields(spField);
-  const issues = await fetchSprintIssues(sprint.id, fields);
 
-  return aggregateSprintData(sprint, issues, spField || "");
+  // Fetch active sprints from ALL boards in parallel
+  const boardSprintResults = await Promise.allSettled(
+    config.boardIds.map(async (boardId) => {
+      const sprints = await fetchSprintsForBoard(boardId, "active");
+      if (sprints.length === 0) return null;
+
+      const sprint = sprints[0]; // First active sprint
+      const issues = await fetchSprintIssues(sprint.id, fields);
+
+      return { boardId, sprint, issues };
+    })
+  );
+
+  // Filter out failed/null results
+  const validSprints = boardSprintResults
+    .filter((r) => r.status === "fulfilled" && r.value !== null)
+    .map((r) => (r as PromiseFulfilledResult<{ boardId: string; sprint: import("./types").JiraSprint; issues: JiraIssue[] }>).value);
+
+  // Log warnings for failed boards
+  boardSprintResults.forEach((result, idx) => {
+    if (result.status === "rejected") {
+      console.warn(`Failed to fetch sprint for board ${config.boardIds[idx]}:`, result.reason);
+    }
+  });
+
+  if (validSprints.length === 0) return null;
+
+  // If only one board, use single-board aggregation for backward compatibility
+  if (validSprints.length === 1) {
+    return aggregateSprintData(validSprints[0].sprint, validSprints[0].issues, spField || "");
+  }
+
+  // Multi-board aggregation
+  return aggregateMultiBoardSprintData(validSprints, spField || "");
 }
 
 let cachedField: string | null = null;
@@ -105,6 +134,234 @@ export function aggregateSprintData(
     avgCycleTime: null, // computed async if needed
     avgLeadTime: null,
   };
+}
+
+// Aggregate sprint data from multiple boards
+export function aggregateMultiBoardSprintData(
+  boardSprints: Array<{
+    boardId: string;
+    sprint: import("./types").JiraSprint;
+    issues: JiraIssue[];
+  }>,
+  storyPointsField: string
+): SprintData {
+  const config = getConfig();
+
+  // Deduplicate issues by ID (in case boards share issues)
+  const allIssuesMap = new Map<string, JiraIssue>();
+  for (const { issues } of boardSprints) {
+    for (const issue of issues) {
+      if (!allIssuesMap.has(issue.id)) {
+        allIssuesMap.set(issue.id, issue);
+      }
+    }
+  }
+  const allIssues = Array.from(allIssuesMap.values());
+
+  // Aggregate points
+  let totalPoints = 0;
+  let completedPoints = 0;
+  let inProgressPoints = 0;
+  let todoPoints = 0;
+  const blockers: JiraIssue[] = [];
+  const wipMap: Record<string, { count: number; points: number }> = {};
+  let unassignedCount = 0;
+
+  for (const issue of allIssues) {
+    const pts = storyPointsField
+      ? getStoryPoints(issue, storyPointsField)
+      : 0;
+    totalPoints += pts;
+    const cat = issue.fields.status.statusCategory.key;
+
+    if (cat === "done") {
+      completedPoints += pts;
+    } else if (cat === "indeterminate") {
+      inProgressPoints += pts;
+      // Track WIP
+      const assignee = issue.fields.assignee?.displayName || "Unassigned";
+      if (!wipMap[assignee]) wipMap[assignee] = { count: 0, points: 0 };
+      wipMap[assignee].count++;
+      wipMap[assignee].points += pts;
+    } else {
+      todoPoints += pts;
+    }
+
+    // Check blockers
+    const status = issue.fields.status.name.toLowerCase();
+    if (
+      status.includes("block") ||
+      issue.fields.flagged
+    ) {
+      blockers.push(issue);
+    }
+
+    if (!issue.fields.assignee && cat !== "done") {
+      unassignedCount++;
+    }
+  }
+
+  const completionRate = totalPoints > 0 ? completedPoints / totalPoints : 0;
+
+  // Create virtual sprint metadata
+  const virtualSprint = createAggregatedSprintMetadata(boardSprints);
+
+  // Aggregate burndown
+  const burndown = aggregateMultiBoardBurndown(boardSprints, totalPoints, storyPointsField);
+
+  // Aggregate scope change
+  const scopeChange = computeScopeChangeMultiBoard(boardSprints);
+
+  return {
+    sprint: virtualSprint,
+    issues: allIssues,
+    totalPoints,
+    completedPoints,
+    inProgressPoints,
+    todoPoints,
+    completionRate,
+    burndown,
+    blockers,
+    wipPerAssignee: wipMap,
+    unassignedCount,
+    scopeChange,
+    avgCycleTime: null, // computed async if needed
+    avgLeadTime: null,
+  };
+}
+
+// Create virtual sprint metadata from multiple boards
+function createAggregatedSprintMetadata(
+  boardSprints: Array<{ boardId: string; sprint: import("./types").JiraSprint }>
+): import("./types").JiraSprint {
+  // Find earliest start date and latest end date
+  const startDates = boardSprints
+    .map((bs) => bs.sprint.startDate)
+    .filter((d): d is string => !!d);
+  const endDates = boardSprints
+    .map((bs) => bs.sprint.endDate)
+    .filter((d): d is string => !!d);
+
+  const earliestStart = startDates.length > 0
+    ? startDates.sort()[0]
+    : undefined;
+  const latestEnd = endDates.length > 0
+    ? endDates.sort().reverse()[0]
+    : undefined;
+
+  // Create name
+  const uniqueNames = [...new Set(boardSprints.map((bs) => bs.sprint.name))];
+  const name =
+    uniqueNames.length === 1
+      ? uniqueNames[0]
+      : `Multi-Board Sprint (${boardSprints.length} boards)`;
+
+  return {
+    id: -1, // Virtual sprint ID
+    self: "",
+    state: "active",
+    name,
+    startDate: earliestStart,
+    endDate: latestEnd,
+    goal: `Aggregated view across ${boardSprints.length} board(s)`,
+  };
+}
+
+// Aggregate burndown data from multiple boards
+function aggregateMultiBoardBurndown(
+  boardSprints: Array<{
+    sprint: import("./types").JiraSprint;
+    issues: JiraIssue[];
+  }>,
+  totalPoints: number,
+  storyPointsField: string
+): BurndownPoint[] {
+  // Find earliest start and latest end across all sprints
+  const allStartDates = boardSprints
+    .map((bs) => bs.sprint.startDate)
+    .filter((d): d is string => !!d)
+    .map((d) => new Date(d));
+  const allEndDates = boardSprints
+    .map((bs) => bs.sprint.endDate)
+    .filter((d): d is string => !!d)
+    .map((d) => new Date(d));
+
+  if (allStartDates.length === 0) return [];
+
+  const globalStart = new Date(
+    Math.min(...allStartDates.map((d) => d.getTime()))
+  );
+  const globalEnd = new Date(
+    Math.max(...allEndDates.map((d) => d.getTime()))
+  );
+  const now = new Date();
+  const effectiveEnd = now < globalEnd ? now : globalEnd;
+
+  // Calculate ideal burndown based on global timeline
+  const totalDays = Math.ceil(
+    (globalEnd.getTime() - globalStart.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  const points: BurndownPoint[] = [];
+
+  // For each day in range
+  for (
+    let d = new Date(globalStart);
+    d <= effectiveEnd;
+    d.setDate(d.getDate() + 1)
+  ) {
+    const dayIndex = Math.ceil(
+      (d.getTime() - globalStart.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const idealRemaining = totalPoints - (totalPoints / totalDays) * dayIndex;
+
+    // Sum completed points across ALL boards by this date
+    let completedByDate = 0;
+    for (const { issues } of boardSprints) {
+      for (const issue of issues) {
+        if (issue.fields.status.statusCategory.key === "done") {
+          const updated = new Date(issue.fields.updated);
+          if (updated <= d) {
+            completedByDate += storyPointsField
+              ? getStoryPoints(issue, storyPointsField)
+              : 0;
+          }
+        }
+      }
+    }
+
+    points.push({
+      date: d.toISOString().split("T")[0],
+      ideal: Math.max(0, Math.round(idealRemaining * 10) / 10),
+      actual: totalPoints - completedByDate,
+    });
+  }
+
+  return points;
+}
+
+// Compute scope change across multiple boards
+function computeScopeChangeMultiBoard(
+  boardSprints: Array<{
+    sprint: import("./types").JiraSprint;
+    issues: JiraIssue[];
+  }>
+): { added: number; removed: number; net: number } {
+  let totalAdded = 0;
+
+  for (const { sprint, issues } of boardSprints) {
+    if (!sprint.startDate) continue;
+
+    const sprintStart = new Date(sprint.startDate);
+    for (const issue of issues) {
+      const created = new Date(issue.fields.created);
+      if (created > sprintStart) {
+        totalAdded++;
+      }
+    }
+  }
+
+  return { added: totalAdded, removed: 0, net: totalAdded };
 }
 
 function computeBurndown(

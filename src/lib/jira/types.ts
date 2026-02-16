@@ -170,7 +170,8 @@ export interface WeeklyReport {
 export interface DashboardConfig {
   jiraBaseUrl: string;
   projectKey: string;
-  boardId: string;
+  boardId: string; // @deprecated - use boardIds instead
+  boardIds: string[]; // Array of board IDs for multi-board support
   wipLimit: number;
   staleDays: number;
   zombieDays: number;

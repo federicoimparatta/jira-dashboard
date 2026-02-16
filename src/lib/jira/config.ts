@@ -8,11 +8,29 @@ function requireEnv(name: string): string {
   return value;
 }
 
+function parseBoardIds(): string[] {
+  // Try new JIRA_BOARD_IDS format first (comma-separated)
+  const boardIdsEnv = process.env.JIRA_BOARD_IDS;
+  if (boardIdsEnv) {
+    return boardIdsEnv.split(',').map(id => id.trim()).filter(Boolean);
+  }
+
+  // Fallback to legacy JIRA_BOARD_ID (single board)
+  const boardIdEnv = process.env.JIRA_BOARD_ID;
+  if (boardIdEnv) {
+    return [boardIdEnv];
+  }
+
+  throw new Error("Missing required environment variable: JIRA_BOARD_ID or JIRA_BOARD_IDS");
+}
+
 export function getConfig(): DashboardConfig {
+  const boardIds = parseBoardIds();
   return {
     jiraBaseUrl: requireEnv("JIRA_BASE_URL").replace(/\/$/, ""),
     projectKey: requireEnv("JIRA_PROJECT_KEY"),
-    boardId: requireEnv("JIRA_BOARD_ID"),
+    boardId: boardIds[0], // @deprecated - first board for backward compatibility
+    boardIds,
     wipLimit: parseInt(process.env.WIP_LIMIT || "3", 10),
     staleDays: parseInt(process.env.STALE_DAYS || "60", 10),
     zombieDays: parseInt(process.env.ZOMBIE_DAYS || "90", 10),
