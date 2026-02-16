@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
-import { getActiveSprintData, computeCycleTimes } from "@/lib/jira/sprint";
+import { getActiveSprintData, getActiveSprintDataForBoard, computeCycleTimes } from "@/lib/jira/sprint";
+import { getConfig } from "@/lib/jira/config";
 
 export const revalidate = 300; // 5 minutes ISR TTL
 export const maxDuration = 300; // Fluid Compute
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const sprintData = await getActiveSprintData();
+    const { searchParams } = new URL(request.url);
+    const boardId = searchParams.get("board");
+
+    // If board ID is specified, fetch for that board only
+    const sprintData = boardId
+      ? await getActiveSprintDataForBoard(boardId)
+      : await getActiveSprintData();
 
     if (!sprintData) {
       return NextResponse.json(

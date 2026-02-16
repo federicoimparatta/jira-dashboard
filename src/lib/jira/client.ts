@@ -100,10 +100,11 @@ export async function fetchAllIssues(
 }
 
 // Fetch sprints from agile API (offset-based pagination)
-export async function fetchSprints(
+// Board-specific version - use this for multi-board support
+export async function fetchSprintsForBoard(
+  boardId: string,
   state?: "active" | "future" | "closed"
 ): Promise<JiraSprint[]> {
-  const config = getConfig();
   const allSprints: JiraSprint[] = [];
   let startAt = 0;
   const maxResults = 50;
@@ -114,7 +115,7 @@ export async function fetchSprints(
       values: JiraSprint[];
       isLast: boolean;
     }>(
-      `/rest/agile/1.0/board/${config.boardId}/sprint?startAt=${startAt}&maxResults=${maxResults}${stateParam}`
+      `/rest/agile/1.0/board/${boardId}/sprint?startAt=${startAt}&maxResults=${maxResults}${stateParam}`
     );
 
     allSprints.push(...data.values);
@@ -123,6 +124,14 @@ export async function fetchSprints(
   } while (true);
 
   return allSprints;
+}
+
+// @deprecated - use fetchSprintsForBoard instead
+export async function fetchSprints(
+  state?: "active" | "future" | "closed"
+): Promise<JiraSprint[]> {
+  const config = getConfig();
+  return fetchSprintsForBoard(config.boardId, state);
 }
 
 // Fetch issues in a specific sprint (agile API, offset-based)
@@ -151,10 +160,11 @@ export async function fetchSprintIssues(
 }
 
 // Fetch backlog issues (agile API, offset-based)
-export async function fetchBacklogIssues(
+// Board-specific version - use this for multi-board support
+export async function fetchBacklogIssuesForBoard(
+  boardId: string,
   fields: string[]
 ): Promise<JiraIssue[]> {
-  const config = getConfig();
   const allIssues: JiraIssue[] = [];
   let startAt = 0;
   const maxResults = 100;
@@ -164,7 +174,7 @@ export async function fetchBacklogIssues(
       issues: JiraIssue[];
       total: number;
     }>(
-      `/rest/agile/1.0/board/${config.boardId}/backlog?startAt=${startAt}&maxResults=${maxResults}&fields=${fields.join(",")}`
+      `/rest/agile/1.0/board/${boardId}/backlog?startAt=${startAt}&maxResults=${maxResults}&fields=${fields.join(",")}`
     );
 
     allIssues.push(...data.issues);
@@ -173,6 +183,14 @@ export async function fetchBacklogIssues(
   } while (true);
 
   return allIssues;
+}
+
+// @deprecated - use fetchBacklogIssuesForBoard instead
+export async function fetchBacklogIssues(
+  fields: string[]
+): Promise<JiraIssue[]> {
+  const config = getConfig();
+  return fetchBacklogIssuesForBoard(config.boardId, fields);
 }
 
 // Fetch changelog for a single issue

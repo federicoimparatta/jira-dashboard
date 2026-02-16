@@ -1,5 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useBacklogData } from "@/lib/hooks/use-dashboard-data";
 import { HealthGauge } from "../components/health-gauge";
 
@@ -18,8 +20,19 @@ interface Alert {
   issues: string[];
 }
 
+// Tooltips for each KPI dimension
+const DIMENSION_TOOLTIPS: Record<string, string> = {
+  "Estimation Coverage": "Percentage of backlog items that have story point estimates. Higher is better - indicates better planning and predictability.",
+  "Freshness": "How recently backlog items have been updated. Items not touched in 60+ days are considered stale and may need review.",
+  "Activity": "Tracks items with no status changes in 90+ days (zombies). Active grooming keeps this metric healthy.",
+  "Priority Distribution": "Balance of priority levels. Too many high-priority items (priority inflation) indicates poor prioritization.",
+  "Size Distribution": "Mix of small, medium, and large items. Healthy backlogs have a variety of sizes for sprint flexibility.",
+};
+
 export default function BacklogPage() {
-  const { data, error, isLoading } = useBacklogData();
+  const searchParams = useSearchParams();
+  const boardId = searchParams.get("board") || undefined;
+  const { data, error, isLoading } = useBacklogData(boardId);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -89,7 +102,11 @@ export default function BacklogPage() {
         </h2>
         <div className="space-y-4">
           {dimensions.map((dim) => (
-            <DimensionBar key={dim.name} dimension={dim} />
+            <DimensionBar
+              key={dim.name}
+              dimension={dim}
+              tooltip={DIMENSION_TOOLTIPS[dim.name]}
+            />
           ))}
         </div>
       </div>
@@ -161,7 +178,14 @@ function StatBox({
   );
 }
 
-function DimensionBar({ dimension }: { dimension: Dimension }) {
+function DimensionBar({
+  dimension,
+  tooltip,
+}: {
+  dimension: Dimension;
+  tooltip?: string;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
   const barColor =
     dimension.score > 70
       ? "bg-green-500"
@@ -172,12 +196,31 @@ function DimensionBar({ dimension }: { dimension: Dimension }) {
   return (
     <div>
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-gray-700">
-          {dimension.name}{" "}
-          <span className="text-xs text-gray-400">
-            ({Math.round(dimension.weight * 100)}% weight)
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-700">
+            {dimension.name}{" "}
+            <span className="text-xs text-gray-400">
+              ({Math.round(dimension.weight * 100)}% weight)
+            </span>
           </span>
-        </span>
+          {tooltip && (
+            <div className="relative inline-block">
+              <button
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-xs text-gray-600 hover:bg-gray-300"
+                aria-label="More information"
+              >
+                ?
+              </button>
+              {showTooltip && (
+                <div className="absolute left-0 top-6 z-10 w-64 rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 shadow-lg">
+                  {tooltip}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <span className="font-mono font-bold text-gray-900">
           {dimension.score}
         </span>
