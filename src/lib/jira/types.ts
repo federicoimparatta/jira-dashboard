@@ -113,6 +113,22 @@ export interface BacklogAlert {
   issues: string[]; // issue keys
 }
 
+export interface ChildIssue {
+  key: string;
+  summary: string;
+  status: {
+    name: string;
+    categoryKey: string;
+  };
+  assignee: string | null;
+  storyPoints: number;
+  issuetype: string;
+  priority: {
+    name: string;
+    id: string;
+  };
+}
+
 export interface EpicProgress {
   key: string;
   summary: string;
@@ -138,6 +154,20 @@ export interface EpicProgress {
     todo: number;
   };
   updated: string;
+  children: ChildIssue[];
+  boardIds: string[];
+}
+
+export interface BoardGroup {
+  boardId: string;
+  boardName: string;
+  epics: EpicProgress[];
+  summary: {
+    totalEpics: number;
+    totalChildIssues: number;
+    totalDoneChildIssues: number;
+    avgCompletionRate: number;
+  };
 }
 
 export interface VelocityPoint {

@@ -217,6 +217,43 @@ export async function fetchIssueChangelog(
   return allHistories;
 }
 
+// Fetch non-done epics for a specific board (agile API, offset-based)
+export async function fetchBoardEpics(
+  boardId: string
+): Promise<{ id: number; key: string; name: string; done: boolean }[]> {
+  const allEpics: { id: number; key: string; name: string; done: boolean }[] = [];
+  let startAt = 0;
+  const maxResults = 50;
+
+  do {
+    const data = await jiraFetch<{
+      values: { id: number; key: string; name: string; done: boolean }[];
+      isLast: boolean;
+    }>(
+      `/rest/agile/1.0/board/${boardId}/epic?done=false&startAt=${startAt}&maxResults=${maxResults}`
+    );
+
+    allEpics.push(...data.values);
+    if (data.isLast || data.values.length < maxResults) break;
+    startAt += maxResults;
+  } while (true);
+
+  return allEpics;
+}
+
+// Fetch the display name of a board
+export async function fetchBoardName(boardId: string): Promise<string> {
+  try {
+    const data = await jiraFetch<{ id: number; name: string }>(
+      `/rest/agile/1.0/board/${boardId}`
+    );
+    return data.name || `Board ${boardId}`;
+  } catch {
+    console.warn(`Failed to fetch board ${boardId} name`);
+    return `Board ${boardId}`;
+  }
+}
+
 // Discover story points custom field ID
 export async function discoverStoryPointsField(): Promise<string | null> {
   const fields = await jiraFetch<{ id: string; name: string }[]>(
