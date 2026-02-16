@@ -30,14 +30,14 @@ function EpicsContent() {
 
   const typedData = data as EpicsApiResponse | undefined;
 
-  const { filteredBoards, filteredUngrouped, statuses, assignees } =
+  const { filteredBoards, filteredUngrouped, statuses, teams } =
     useMemo(() => {
       if (!typedData)
         return {
           filteredBoards: [] as BoardGroup[],
           filteredUngrouped: [] as EpicProgress[],
           statuses: [] as string[],
-          assignees: [] as string[],
+          teams: [] as { id: string; name: string }[],
         };
 
       // Extract filter options from ALL epics (unfiltered)
@@ -45,13 +45,10 @@ function EpicsContent() {
         .flatMap((b) => b.epics)
         .concat(typedData.ungrouped);
       const statuses = [...new Set(allEpics.map((e) => e.status.name))].sort();
-      const assignees = [
-        ...new Set(
-          allEpics
-            .map((e) => e.assignee)
-            .filter((a): a is string => a !== null)
-        ),
-      ].sort();
+      const teams = typedData.boards.map((b) => ({
+        id: b.boardId,
+        name: b.boardName,
+      }));
 
       function matchesFilters(epic: EpicProgress): boolean {
         if (filters.search) {
@@ -65,7 +62,7 @@ function EpicsContent() {
         }
         if (filters.status !== "all" && epic.status.name !== filters.status)
           return false;
-        if (filters.assignee !== "all" && epic.assignee !== filters.assignee)
+        if (filters.team !== "all" && !epic.boardIds.includes(filters.team))
           return false;
         return true;
       }
@@ -79,7 +76,7 @@ function EpicsContent() {
 
       const filteredUngrouped = typedData.ungrouped.filter(matchesFilters);
 
-      return { filteredBoards, filteredUngrouped, statuses, assignees };
+      return { filteredBoards, filteredUngrouped, statuses, teams };
     }, [typedData, filters]);
 
   if (isLoading) return <LoadingSkeleton />;
@@ -102,7 +99,7 @@ function EpicsContent() {
   const hasActiveFilters =
     filters.search !== "" ||
     filters.status !== "all" ||
-    filters.assignee !== "all";
+    filters.team !== "all";
   const noResults =
     filteredBoards.length === 0 && filteredUngrouped.length === 0;
 
@@ -165,7 +162,7 @@ function EpicsContent() {
       {/* Filter Bar */}
       <EpicsFilterBar
         statuses={statuses}
-        assignees={assignees}
+        teams={teams}
         filters={filters}
         onFiltersChange={setFilters}
       />

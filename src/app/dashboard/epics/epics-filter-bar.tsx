@@ -3,32 +3,32 @@
 export interface EpicFilters {
   search: string;
   status: string; // "all" | specific status name
-  assignee: string; // "all" | specific assignee name
+  team: string; // "all" | specific boardId
 }
 
 export const DEFAULT_FILTERS: EpicFilters = {
   search: "",
   status: "all",
-  assignee: "all",
+  team: "all",
 };
 
 interface EpicsFilterBarProps {
   statuses: string[];
-  assignees: string[];
+  teams: { id: string; name: string }[];
   filters: EpicFilters;
   onFiltersChange: (filters: EpicFilters) => void;
 }
 
 export function EpicsFilterBar({
   statuses,
-  assignees,
+  teams,
   filters,
   onFiltersChange,
 }: EpicsFilterBarProps) {
   const hasActiveFilters =
     filters.search !== "" ||
     filters.status !== "all" ||
-    filters.assignee !== "all";
+    filters.team !== "all";
 
   return (
     <div className="smg-card flex flex-wrap items-center gap-3 p-4">
@@ -74,21 +74,23 @@ export function EpicsFilterBar({
         ))}
       </select>
 
-      {/* Assignee filter */}
-      <select
-        value={filters.assignee}
-        onChange={(e) =>
-          onFiltersChange({ ...filters, assignee: e.target.value })
-        }
-        className="rounded-lg border border-smg-gray-200 bg-white px-3 py-2 text-sm text-smg-gray-700 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
-      >
-        <option value="all">All assignees</option>
-        {assignees.map((a) => (
-          <option key={a} value={a}>
-            {a}
-          </option>
-        ))}
-      </select>
+      {/* Team filter */}
+      {teams.length > 1 && (
+        <select
+          value={filters.team}
+          onChange={(e) =>
+            onFiltersChange({ ...filters, team: e.target.value })
+          }
+          className="rounded-lg border border-smg-gray-200 bg-white px-3 py-2 text-sm text-smg-gray-700 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
+        >
+          <option value="all">All teams</option>
+          {teams.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Clear filters */}
       {hasActiveFilters && (
