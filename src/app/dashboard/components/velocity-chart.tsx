@@ -22,7 +22,7 @@ interface VelocityChartProps {
 export function VelocityChart({ data }: VelocityChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-400">
+      <div className="flex h-64 items-center justify-center text-smg-gray-300">
         No velocity data available yet. Velocity history is populated when sprints close.
       </div>
     );
@@ -31,29 +31,44 @@ export function VelocityChart({ data }: VelocityChartProps) {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#EAF0F6" />
         <XAxis
           dataKey="sprintName"
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: "#6B7D8D" }}
           interval={0}
           angle={-15}
           textAnchor="end"
           height={60}
+          axisLine={{ stroke: "#D3DCE6" }}
+          tickLine={{ stroke: "#D3DCE6" }}
         />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip />
-        <Legend />
+        <YAxis
+          tick={{ fontSize: 12, fill: "#6B7D8D" }}
+          axisLine={{ stroke: "#D3DCE6" }}
+          tickLine={{ stroke: "#D3DCE6" }}
+        />
+        <Tooltip
+          contentStyle={{
+            borderRadius: "12px",
+            border: "1px solid #EAF0F6",
+            boxShadow: "4px 4px 24px rgba(102,102,102,0.06)",
+            fontSize: "13px",
+          }}
+        />
+        <Legend
+          wrapperStyle={{ fontSize: "12px", color: "#6B7D8D" }}
+        />
         <Bar
           dataKey="committed"
-          fill="#94a3b8"
+          fill="#B0BEC5"
           name="Committed"
-          radius={[4, 4, 0, 0]}
+          radius={[6, 6, 0, 0]}
         />
         <Bar
           dataKey="completed"
-          fill="#3b82f6"
+          fill="#0976D6"
           name="Completed"
-          radius={[4, 4, 0, 0]}
+          radius={[6, 6, 0, 0]}
         />
       </BarChart>
     </ResponsiveContainer>

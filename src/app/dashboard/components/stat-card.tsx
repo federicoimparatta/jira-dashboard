@@ -9,11 +9,11 @@ interface StatCardProps {
   variant?: "default" | "success" | "warning" | "danger";
 }
 
-const variantStyles = {
-  default: "bg-white border-gray-200",
-  success: "bg-white border-green-200",
-  warning: "bg-white border-amber-200",
-  danger: "bg-white border-red-200",
+const variantAccents: Record<string, string> = {
+  default: "from-smg-blue to-smg-blue-light",
+  success: "from-smg-teal to-emerald-400",
+  warning: "from-smg-warning to-amber-400",
+  danger: "from-smg-danger to-rose-400",
 };
 
 const trendIcons = {
@@ -23,9 +23,9 @@ const trendIcons = {
 };
 
 const trendColors = {
-  up: "text-green-600",
-  down: "text-red-600",
-  flat: "text-gray-500",
+  up: "text-smg-teal",
+  down: "text-smg-danger",
+  flat: "text-smg-gray-500",
 };
 
 export function StatCard({
@@ -37,20 +37,23 @@ export function StatCard({
   variant = "default",
 }: StatCardProps) {
   return (
-    <div
-      className={`rounded-lg border p-4 shadow-sm ${variantStyles[variant]}`}
-    >
-      <div className="text-sm font-medium text-gray-500">{title}</div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-gray-900">{value}</span>
+    <div className="smg-card relative overflow-hidden p-5">
+      {/* Top accent bar */}
+      <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${variantAccents[variant]}`} />
+
+      <div className="text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
+        {title}
+      </div>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-3xl font-bold text-smg-gray-900">{value}</span>
         {trend && trendValue && (
-          <span className={`text-sm font-medium ${trendColors[trend]}`}>
+          <span className={`text-sm font-semibold ${trendColors[trend]}`}>
             {trendIcons[trend]} {trendValue}
           </span>
         )}
       </div>
       {subtitle && (
-        <div className="mt-1 text-xs text-gray-500">{subtitle}</div>
+        <div className="mt-1.5 text-xs text-smg-gray-500">{subtitle}</div>
       )}
     </div>
   );

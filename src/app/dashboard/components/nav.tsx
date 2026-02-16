@@ -43,27 +43,44 @@ export function DashboardNav() {
   };
 
   return (
-    <nav className="border-b border-gray-200 bg-white">
+    <nav className="smg-gradient-nav shadow-lg">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-lg font-bold text-gray-900">
-              Jira Dashboard
-            </span>
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-5">
+            {/* Brand mark */}
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="1" y="1" width="7" height="7" rx="2" fill="white" opacity="0.9"/>
+                  <rect x="10" y="1" width="7" height="7" rx="2" fill="white" opacity="0.6"/>
+                  <rect x="1" y="10" width="7" height="7" rx="2" fill="white" opacity="0.6"/>
+                  <rect x="10" y="10" width="7" height="7" rx="2" fill="white" opacity="0.3"/>
+                </svg>
+              </div>
+              <span className="text-lg font-semibold tracking-tight text-white">
+                Engineering
+              </span>
+            </div>
+
+            {/* Board selector */}
             {boards.length > 1 && (
-              <select
-                value={selectedBoard}
-                onChange={(e) => handleBoardChange(e.target.value)}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900"
-              >
-                {boards.map((board) => (
-                  <option key={board.id} value={board.id}>
-                    {board.name}
-                  </option>
-                ))}
-              </select>
+              <div className="hidden sm:block">
+                <select
+                  value={selectedBoard}
+                  onChange={(e) => handleBoardChange(e.target.value)}
+                  className="smg-select rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/30"
+                >
+                  {boards.map((board) => (
+                    <option key={board.id} value={board.id} className="bg-smg-navy text-white">
+                      {board.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
+
+          {/* Navigation tabs */}
           <div className="flex gap-1">
             {links.map((link) => {
               const isActive =
@@ -74,10 +91,10 @@ export function DashboardNav() {
                 <Link
                   key={link.href}
                   href={`${link.href}${selectedBoard ? `?board=${selectedBoard}` : ""}`}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-white text-smg-navy shadow-md"
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -87,6 +104,23 @@ export function DashboardNav() {
           </div>
         </div>
       </div>
+
+      {/* Mobile board selector */}
+      {boards.length > 1 && (
+        <div className="border-t border-white/10 px-4 py-2 sm:hidden">
+          <select
+            value={selectedBoard}
+            onChange={(e) => handleBoardChange(e.target.value)}
+            className="smg-select w-full rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
+          >
+            {boards.map((board) => (
+              <option key={board.id} value={board.id} className="bg-smg-navy text-white">
+                {board.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
     </nav>
   );
 }
