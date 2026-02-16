@@ -79,6 +79,49 @@ export async function getActiveSprintData(): Promise<SprintData | null> {
   return aggregateMultiBoardSprintData(validSprints, spField || "");
 }
 
+// Fetch per-board sprint data for the overview (All Boards) view
+export async function getOverviewSprintData(
+  boardNames: Map<string, string>
+): Promise<{
+  boards: Array<{ boardId: string; boardName: string; sprintData: SprintData }>;
+} | null> {
+  const config = getConfig();
+  const spField =
+    config.storyPointsField || (await discoverAndCacheField());
+  const fields = getIssueFields(spField);
+
+  const boardSprintResults = await Promise.allSettled(
+    config.boardIds.map(async (boardId) => {
+      const sprints = await fetchSprintsForBoard(boardId, "active");
+      if (sprints.length === 0) return null;
+      const sprint = sprints[0];
+      const issues = await fetchSprintIssues(sprint.id, fields);
+      const data = aggregateSprintData(sprint, issues, spField || "");
+      return {
+        boardId,
+        boardName: boardNames.get(boardId) || `Board ${boardId}`,
+        sprintData: data,
+      };
+    })
+  );
+
+  const validBoards = boardSprintResults
+    .filter(
+      (r): r is PromiseFulfilledResult<NonNullable<{ boardId: string; boardName: string; sprintData: SprintData }>> =>
+        r.status === "fulfilled" && r.value !== null
+    )
+    .map((r) => r.value);
+
+  boardSprintResults.forEach((result, idx) => {
+    if (result.status === "rejected") {
+      console.warn(`Failed to fetch sprint for board ${config.boardIds[idx]}:`, result.reason);
+    }
+  });
+
+  if (validBoards.length === 0) return null;
+  return { boards: validBoards };
+}
+
 let cachedField: string | null = null;
 async function discoverAndCacheField(): Promise<string | null> {
   if (cachedField) return cachedField;

@@ -224,6 +224,68 @@ export interface WeeklyReport {
   velocityTrend: VelocityPoint[];
 }
 
+export interface BoardSprintSummary {
+  boardId: string;
+  boardName: string;
+  sprint: {
+    id: number;
+    name: string;
+    state: string;
+    startDate?: string;
+    endDate?: string;
+    goal?: string;
+  };
+  progress: {
+    totalPoints: number;
+    completedPoints: number;
+    inProgressPoints: number;
+    todoPoints: number;
+    completionRate: number;
+  };
+  issueCount: {
+    total: number;
+    done: number;
+    inProgress: number;
+    todo: number;
+  };
+  blockers: {
+    key: string;
+    summary: string;
+    assignee: string;
+    status: string;
+  }[];
+}
+
+export interface OverviewSprintResponse {
+  mode: "overview";
+  boards: BoardSprintSummary[];
+  aggregate: {
+    totalPoints: number;
+    completedPoints: number;
+    inProgressPoints: number;
+    todoPoints: number;
+    completionRate: number;
+    totalIssues: number;
+    totalDone: number;
+    totalInProgress: number;
+    totalTodo: number;
+    avgCycleTime: number | null;
+    avgLeadTime: number | null;
+    scopeChange: { added: number; removed: number; net: number };
+  };
+  wipPerAssignee: Record<string, { count: number; points: number }>;
+  unassignedCount: number;
+  blockers: {
+    key: string;
+    summary: string;
+    assignee: string;
+    status: string;
+    boardName: string;
+  }[];
+  jiraBaseUrl: string;
+  fetchedAt: string;
+}
+
 export interface DashboardConfig {
   jiraBaseUrl: string;
   projectKey: string;

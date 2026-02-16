@@ -10,7 +10,8 @@ export const maxDuration = 300;
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const boardId = searchParams.get("board");
+    const boardParam = searchParams.get("board");
+    const boardId = boardParam === "all" ? null : boardParam;
 
     const config = getConfig();
     const spField = config.storyPointsField || "customfield_10016";

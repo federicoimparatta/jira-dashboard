@@ -7,6 +7,7 @@ import { StatCard } from "./components/stat-card";
 import { ProgressBar } from "./components/progress-bar";
 import { BurndownChart } from "./components/burndown-chart";
 import { JiraLink } from "./components/jira-link";
+import { ProjectOverview } from "./components/project-overview";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -28,6 +29,11 @@ function DashboardContent() {
         </p>
       </div>
     );
+  }
+
+  // Dispatch to overview when "All Boards" is selected
+  if (data?.mode === "overview") {
+    return <ProjectOverview data={data} />;
   }
 
   const sprint = data?.sprint;

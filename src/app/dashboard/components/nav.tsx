@@ -72,6 +72,9 @@ export function DashboardNav() {
                   onChange={(e) => handleBoardChange(e.target.value)}
                   className="smg-select rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
+                  <option value="all" className="bg-smg-navy text-white">
+                    All Boards
+                  </option>
                   {boards.map((board) => (
                     <option key={board.id} value={board.id} className="bg-smg-navy text-white">
                       {board.name}
@@ -119,6 +122,9 @@ export function DashboardNav() {
             onChange={(e) => handleBoardChange(e.target.value)}
             className="smg-select w-full rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
           >
+            <option value="all" className="bg-smg-navy text-white">
+              All Boards
+            </option>
             {boards.map((board) => (
               <option key={board.id} value={board.id} className="bg-smg-navy text-white">
                 {board.name}
