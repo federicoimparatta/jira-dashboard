@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { OverviewSprintResponse, BoardSprintSummary } from "@/lib/jira/types";
 import { StatCard } from "./stat-card";
 import { ProgressBar } from "./progress-bar";
@@ -7,14 +9,18 @@ import { JiraLink } from "./jira-link";
 
 function BoardSprintCard({ board }: { board: BoardSprintSummary }) {
   const { sprint, progress, issueCount, blockers } = board;
+  const pathname = usePathname();
 
   return (
     <div className="smg-card relative overflow-hidden p-5">
       <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-smg-blue to-smg-blue-light" />
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
+        <Link
+          href={`${pathname}?board=${board.boardId}`}
+          className="text-xs font-semibold uppercase tracking-wider text-smg-blue hover:underline"
+        >
           {board.boardName}
-        </h3>
+        </Link>
         {blockers.length > 0 && (
           <span className="rounded-full bg-smg-danger/10 px-2 py-0.5 text-[11px] font-bold text-smg-danger">
             {blockers.length} blocked

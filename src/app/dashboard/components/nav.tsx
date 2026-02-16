@@ -22,10 +22,19 @@ export function DashboardNav() {
     fetch("/api/config/boards")
       .then((res) => res.json())
       .then((data) => {
-        setBoards(data.boards || []);
-        // Set initial board from URL or default to first board
+        const fetchedBoards = data.boards || [];
+        setBoards(fetchedBoards);
+        // Set initial board from URL, default to "all" for multi-board or first board for single
         const boardParam = searchParams.get("board");
-        setSelectedBoard(boardParam || data.boards[0]?.id || "");
+        const defaultBoard = fetchedBoards.length > 1 ? "all" : fetchedBoards[0]?.id || "";
+        const selected = boardParam || defaultBoard;
+        setSelectedBoard(selected);
+        // Push default board to URL if not already set
+        if (!boardParam && selected) {
+          const params = new URLSearchParams(searchParams);
+          params.set("board", selected);
+          router.replace(`${pathname}?${params.toString()}`);
+        }
       })
       .catch(() => {
         // Fallback to single board from env

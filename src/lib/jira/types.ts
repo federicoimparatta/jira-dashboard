@@ -286,6 +286,36 @@ export interface OverviewSprintResponse {
   fetchedAt: string;
 }
 
+export interface BoardBacklogSummary {
+  boardId: string;
+  boardName: string;
+  healthScore: number;
+  stats: {
+    totalItems: number;
+    estimatedItems: number;
+    staleItems: number;
+    zombieItems: number;
+  };
+  dimensions: BacklogDimension[];
+  alerts: BacklogAlert[];
+}
+
+export interface OverviewBacklogResponse {
+  mode: "overview";
+  boards: BoardBacklogSummary[];
+  aggregate: {
+    healthScore: number;
+    totalItems: number;
+    estimatedItems: number;
+    staleItems: number;
+    zombieItems: number;
+    dimensions: BacklogDimension[];
+    alerts: BacklogAlert[];
+  };
+  jiraBaseUrl: string;
+  fetchedAt: string;
+}
+
 export interface DashboardConfig {
   jiraBaseUrl: string;
   projectKey: string;

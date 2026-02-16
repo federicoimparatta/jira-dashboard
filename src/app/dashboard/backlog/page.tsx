@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useBacklogData } from "@/lib/hooks/use-dashboard-data";
 import { HealthGauge } from "../components/health-gauge";
 import { JiraLink } from "../components/jira-link";
+import { BacklogOverview } from "../components/backlog-overview";
 
 interface Dimension {
   name: string;
@@ -51,6 +52,11 @@ function BacklogContent() {
         </p>
       </div>
     );
+  }
+
+  // Overview mode: per-board breakdown
+  if (data?.mode === "overview") {
+    return <BacklogOverview data={data} />;
   }
 
   const dimensions: Dimension[] = data?.dimensions || [];

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { fetchBacklogIssues, fetchBacklogIssuesForBoard } from "@/lib/jira/client";
+import { fetchBacklogIssuesForBoard, fetchBoardName } from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
 import { scoreBacklogHealth } from "@/lib/scoring/backlog-health";
+import type { OverviewBacklogResponse } from "@/lib/jira/types";
 
 export const revalidate = 1800; // 30 minutes ISR TTL
 export const maxDuration = 300;
@@ -11,36 +12,106 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const boardParam = searchParams.get("board");
-    const boardId = boardParam === "all" ? null : boardParam;
-
     const config = getConfig();
     const spField = config.storyPointsField || "customfield_10016";
     const fields = getIssueFields(spField);
 
+    const scoringConfig = {
+      staleDays: config.staleDays,
+      zombieDays: config.zombieDays,
+      storyPointsField: spField,
+      avgVelocity: null as number | null,
+    };
+
+    // "All Boards" overview mode
+    if (boardParam === "all" && config.boardIds.length > 1) {
+      // Fetch board names + issues per board in parallel
+      const boardResults = await Promise.allSettled(
+        config.boardIds.map(async (id) => {
+          const [name, issues] = await Promise.all([
+            fetchBoardName(id),
+            fetchBacklogIssuesForBoard(id, fields),
+          ]);
+          return { id, name, issues };
+        })
+      );
+
+      const successfulBoards = boardResults
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => (r as PromiseFulfilledResult<{ id: string; name: string; issues: import("@/lib/jira/types").JiraIssue[] }>).value);
+
+      // Score health per board
+      const boards = successfulBoards.map((b) => {
+        const health = scoreBacklogHealth(b.issues, scoringConfig);
+        return {
+          boardId: b.id,
+          boardName: b.name,
+          healthScore: health.healthScore,
+          stats: {
+            totalItems: health.totalItems,
+            estimatedItems: health.estimatedItems,
+            staleItems: health.staleItems,
+            zombieItems: health.zombieItems,
+          },
+          dimensions: health.dimensions,
+          alerts: health.alerts,
+        };
+      });
+
+      // Aggregate: deduplicate issues across boards, then score
+      const uniqueIssuesMap = new Map<string, import("@/lib/jira/types").JiraIssue>();
+      for (const b of successfulBoards) {
+        for (const issue of b.issues) {
+          if (!uniqueIssuesMap.has(issue.id)) {
+            uniqueIssuesMap.set(issue.id, issue);
+          }
+        }
+      }
+      const aggregateHealth = scoreBacklogHealth(
+        Array.from(uniqueIssuesMap.values()),
+        scoringConfig
+      );
+
+      const response: OverviewBacklogResponse = {
+        mode: "overview",
+        boards,
+        aggregate: {
+          healthScore: aggregateHealth.healthScore,
+          totalItems: aggregateHealth.totalItems,
+          estimatedItems: aggregateHealth.estimatedItems,
+          staleItems: aggregateHealth.staleItems,
+          zombieItems: aggregateHealth.zombieItems,
+          dimensions: aggregateHealth.dimensions,
+          alerts: aggregateHealth.alerts,
+        },
+        jiraBaseUrl: config.jiraBaseUrl,
+        fetchedAt: new Date().toISOString(),
+      };
+
+      return NextResponse.json(response);
+    }
+
+    // Single board or fallback aggregate
+    const boardId = boardParam === "all" ? null : boardParam;
     let issues;
 
-    // If board ID is specified, fetch for that board only
     if (boardId) {
       issues = await fetchBacklogIssuesForBoard(boardId, fields);
     } else {
-      // Fetch backlog from all boards in parallel
       const backlogResults = await Promise.allSettled(
         config.boardIds.map((id) => fetchBacklogIssuesForBoard(id, fields))
       );
 
-      // Log warnings for failed boards
       backlogResults.forEach((result, idx) => {
         if (result.status === "rejected") {
           console.warn(`Failed to fetch backlog for board ${config.boardIds[idx]}:`, result.reason);
         }
       });
 
-      // Merge all backlog issues from successful results
       const allBacklogIssues = backlogResults
         .filter((r) => r.status === "fulfilled")
         .flatMap((r) => (r as PromiseFulfilledResult<import("@/lib/jira/types").JiraIssue[]>).value);
 
-      // Deduplicate issues by ID (in case boards share issues)
       const uniqueIssuesMap = new Map();
       for (const issue of allBacklogIssues) {
         if (!uniqueIssuesMap.has(issue.id)) {
@@ -50,12 +121,7 @@ export async function GET(request: Request) {
       issues = Array.from(uniqueIssuesMap.values());
     }
 
-    const backlogData = scoreBacklogHealth(issues, {
-      staleDays: config.staleDays,
-      zombieDays: config.zombieDays,
-      storyPointsField: spField,
-      avgVelocity: null, // Will be populated from Postgres in Phase 2
-    });
+    const backlogData = scoreBacklogHealth(issues, scoringConfig);
 
     const response = {
       healthScore: backlogData.healthScore,
