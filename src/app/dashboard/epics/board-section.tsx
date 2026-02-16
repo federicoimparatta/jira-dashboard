@@ -7,11 +7,13 @@ import { ExpandableEpicCard } from "./epic-card-expandable";
 interface BoardSectionProps {
   board: BoardGroup;
   defaultExpanded?: boolean;
+  jiraBaseUrl?: string;
 }
 
 export function BoardSection({
   board,
   defaultExpanded = true,
+  jiraBaseUrl,
 }: BoardSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
@@ -62,7 +64,7 @@ export function BoardSection({
       {expanded && (
         <div className="space-y-4">
           {board.epics.map((epic) => (
-            <ExpandableEpicCard key={epic.key} epic={epic} />
+            <ExpandableEpicCard key={epic.key} epic={epic} jiraBaseUrl={jiraBaseUrl} />
           ))}
         </div>
       )}

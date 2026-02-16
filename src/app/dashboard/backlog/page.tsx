@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useBacklogData } from "@/lib/hooks/use-dashboard-data";
 import { HealthGauge } from "../components/health-gauge";
+import { JiraLink } from "../components/jira-link";
 
 interface Dimension {
   name: string;
@@ -124,7 +125,16 @@ function BacklogContent() {
                   </p>
                   {alert.issues.length > 0 && (
                     <p className="mt-1 text-xs text-smg-gray-500">
-                      {alert.issues.slice(0, 10).join(", ")}
+                      {alert.issues.slice(0, 10).map((key, j) => (
+                        <span key={key}>
+                          {j > 0 && ", "}
+                          <JiraLink
+                            issueKey={key}
+                            jiraBaseUrl={data?.jiraBaseUrl}
+                            className="text-smg-blue"
+                          />
+                        </span>
+                      ))}
                       {alert.issues.length > 10 &&
                         ` +${alert.issues.length - 10} more`}
                     </p>

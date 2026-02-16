@@ -6,6 +6,7 @@ import { useSprintData } from "@/lib/hooks/use-dashboard-data";
 import { StatCard } from "./components/stat-card";
 import { ProgressBar } from "./components/progress-bar";
 import { BurndownChart } from "./components/burndown-chart";
+import { JiraLink } from "./components/jira-link";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -139,9 +140,11 @@ function DashboardContent() {
                   >
                     <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-smg-danger" />
                     <div>
-                      <span className="font-semibold text-smg-blue">
-                        {b.key}
-                      </span>{" "}
+                      <JiraLink
+                        issueKey={b.key}
+                        jiraBaseUrl={data?.jiraBaseUrl}
+                        className="font-semibold text-smg-blue"
+                      />{" "}
                       <span className="text-smg-gray-700">{b.summary}</span>
                       <div className="text-xs text-smg-gray-500">
                         {b.assignee} — {b.status}

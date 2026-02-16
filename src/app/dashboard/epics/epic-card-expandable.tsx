@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EpicProgress, ChildIssue } from "@/lib/jira/types";
 import { ProgressBar } from "../components/progress-bar";
+import { JiraLink } from "../components/jira-link";
 
 const statusBadgeColors: Record<string, string> = {
   done: "bg-smg-teal/10 text-smg-teal",
@@ -10,15 +11,17 @@ const statusBadgeColors: Record<string, string> = {
   new: "bg-smg-gray-100 text-smg-gray-500",
 };
 
-function ChildIssueRow({ child }: { child: ChildIssue }) {
+function ChildIssueRow({ child, jiraBaseUrl }: { child: ChildIssue; jiraBaseUrl?: string }) {
   const badgeColor =
     statusBadgeColors[child.status.categoryKey] || statusBadgeColors.new;
 
   return (
     <div className="flex items-center gap-3 rounded-lg bg-smg-gray-50 px-4 py-2.5">
-      <span className="shrink-0 text-xs font-semibold text-smg-blue">
-        {child.key}
-      </span>
+      <JiraLink
+        issueKey={child.key}
+        jiraBaseUrl={jiraBaseUrl}
+        className="shrink-0 text-xs font-semibold text-smg-blue"
+      />
       <span className="min-w-0 flex-1 truncate text-sm text-smg-gray-700">
         {child.summary}
       </span>
@@ -39,7 +42,7 @@ function ChildIssueRow({ child }: { child: ChildIssue }) {
   );
 }
 
-export function ExpandableEpicCard({ epic }: { epic: EpicProgress }) {
+export function ExpandableEpicCard({ epic, jiraBaseUrl }: { epic: EpicProgress; jiraBaseUrl?: string }) {
   const [expanded, setExpanded] = useState(false);
 
   const completionPercent =
@@ -63,9 +66,11 @@ export function ExpandableEpicCard({ epic }: { epic: EpicProgress }) {
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="shrink-0 font-semibold text-smg-blue">
-              {epic.key}
-            </span>
+            <JiraLink
+              issueKey={epic.key}
+              jiraBaseUrl={jiraBaseUrl}
+              className="shrink-0 font-semibold text-smg-blue"
+            />
             <span className="truncate font-medium text-smg-gray-700">
               {epic.summary}
             </span>
@@ -150,7 +155,7 @@ export function ExpandableEpicCard({ epic }: { epic: EpicProgress }) {
           ) : (
             <div className="space-y-2">
               {epic.children.map((child) => (
-                <ChildIssueRow key={child.key} child={child} />
+                <ChildIssueRow key={child.key} child={child} jiraBaseUrl={jiraBaseUrl} />
               ))}
             </div>
           )}

@@ -20,6 +20,7 @@ interface EpicsApiResponse {
     totalChildIssues: number;
     totalDoneChildIssues: number;
   };
+  jiraBaseUrl?: string;
   fetchedAt: string;
   error?: string;
 }
@@ -169,12 +170,13 @@ function EpicsContent() {
 
       {/* Board Sections */}
       {filteredBoards.map((board) => (
-        <BoardSection key={board.boardId} board={board} />
+        <BoardSection key={board.boardId} board={board} jiraBaseUrl={typedData?.jiraBaseUrl} />
       ))}
 
       {/* Ungrouped epics */}
       {filteredUngrouped.length > 0 && (
         <BoardSection
+          jiraBaseUrl={typedData?.jiraBaseUrl}
           board={{
             boardId: "__ungrouped",
             boardName: "Other",

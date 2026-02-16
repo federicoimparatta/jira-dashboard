@@ -3,7 +3,7 @@ import { DashboardNav } from "./components/nav";
 
 export const metadata = {
   title: "Engineering",
-  description: "Sprint tracking, backlog health, and velocity trends",
+  description: "Sprint tracking, backlog health, and epics",
 };
 
 function NavFallback() {

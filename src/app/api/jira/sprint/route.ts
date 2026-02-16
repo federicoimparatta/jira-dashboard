@@ -67,6 +67,7 @@ export async function GET(request: Request) {
           (i) => i.fields.status.statusCategory.key === "new"
         ).length,
       },
+      jiraBaseUrl: getConfig().jiraBaseUrl,
       fetchedAt: new Date().toISOString(),
     };
 

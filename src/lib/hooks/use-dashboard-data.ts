@@ -22,14 +22,6 @@ export function useBacklogData(boardId?: string) {
   });
 }
 
-export function useVelocityData(boardId?: string) {
-  const url = boardId ? `/api/jira/velocity?board=${boardId}` : "/api/jira/velocity";
-  return useSWR(url, fetcher, {
-    refreshInterval: 300_000, // Poll every 5 minutes
-    revalidateOnFocus: true,
-  });
-}
-
 export function useEpicsData() {
   return useSWR("/api/jira/epics", fetcher, {
     refreshInterval: 120_000, // Poll every 2 minutes

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Engineering",
-  description: "Sprint tracking, backlog health, and velocity trends — optimized for Vercel Free Tier",
+  description: "Sprint tracking, backlog health, and epics — optimized for Vercel Free Tier",
 };
 
 export default function RootLayout({

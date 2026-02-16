@@ -48,6 +48,7 @@ export async function GET() {
         })),
         ungrouped: [],
         summary: { totalEpics: 0, avgCompletionRate: 0, totalChildIssues: 0, totalDoneChildIssues: 0 },
+        jiraBaseUrl: config.jiraBaseUrl,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -189,6 +190,7 @@ export async function GET() {
         totalChildIssues,
         totalDoneChildIssues,
       },
+      jiraBaseUrl: config.jiraBaseUrl,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {

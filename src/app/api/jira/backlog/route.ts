@@ -66,6 +66,7 @@ export async function GET(request: Request) {
         staleItems: backlogData.staleItems,
         zombieItems: backlogData.zombieItems,
       },
+      jiraBaseUrl: config.jiraBaseUrl,
       fetchedAt: new Date().toISOString(),
     };
 
