@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 const links = [
   { href: "/dashboard", label: "Sprint" },
   { href: "/dashboard/backlog", label: "Backlog Health" },
+  { href: "/dashboard/epics", label: "Epics" },
   { href: "/dashboard/trends", label: "Trends" },
 ];
 
@@ -42,6 +43,8 @@ export function DashboardNav() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const isEpicsPage = pathname === "/dashboard/epics";
+
   return (
     <nav className="smg-gradient-nav shadow-lg">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -62,8 +65,8 @@ export function DashboardNav() {
               </span>
             </div>
 
-            {/* Board selector */}
-            {boards.length > 1 && (
+            {/* Board selector (hidden on cross-board pages like Epics) */}
+            {boards.length > 1 && !isEpicsPage && (
               <div className="hidden sm:block">
                 <select
                   value={selectedBoard}
@@ -87,10 +90,14 @@ export function DashboardNav() {
                 link.href === "/dashboard"
                   ? pathname === "/dashboard"
                   : pathname.startsWith(link.href);
+              const href =
+                link.href === "/dashboard/epics"
+                  ? link.href
+                  : `${link.href}${selectedBoard ? `?board=${selectedBoard}` : ""}`;
               return (
                 <Link
                   key={link.href}
-                  href={`${link.href}${selectedBoard ? `?board=${selectedBoard}` : ""}`}
+                  href={href}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-white text-smg-navy shadow-md"
@@ -105,8 +112,8 @@ export function DashboardNav() {
         </div>
       </div>
 
-      {/* Mobile board selector */}
-      {boards.length > 1 && (
+      {/* Mobile board selector (hidden on cross-board pages like Epics) */}
+      {boards.length > 1 && !isEpicsPage && (
         <div className="border-t border-white/10 px-4 py-2 sm:hidden">
           <select
             value={selectedBoard}

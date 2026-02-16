@@ -113,6 +113,33 @@ export interface BacklogAlert {
   issues: string[]; // issue keys
 }
 
+export interface EpicProgress {
+  key: string;
+  summary: string;
+  status: {
+    name: string;
+    categoryKey: string; // "new" | "indeterminate" | "done"
+  };
+  assignee: string | null;
+  priority: {
+    name: string;
+    id: string;
+  };
+  childIssues: {
+    total: number;
+    done: number;
+    inProgress: number;
+    todo: number;
+  };
+  storyPoints: {
+    total: number;
+    done: number;
+    inProgress: number;
+    todo: number;
+  };
+  updated: string;
+}
+
 export interface VelocityPoint {
   sprintId: number;
   sprintName: string;

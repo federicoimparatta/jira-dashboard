@@ -29,3 +29,11 @@ export function useVelocityData(boardId?: string) {
     revalidateOnFocus: true,
   });
 }
+
+export function useEpicsData() {
+  return useSWR("/api/jira/epics", fetcher, {
+    refreshInterval: 120_000, // Poll every 2 minutes
+    revalidateOnFocus: true,
+    dedupingInterval: 60_000,
+  });
+}
