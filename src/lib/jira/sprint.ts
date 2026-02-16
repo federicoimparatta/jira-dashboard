@@ -14,8 +14,31 @@ import {
   ChangelogHistory,
 } from "./types";
 
+// Fetch sprint data for a specific board
+export async function getActiveSprintDataForBoard(boardId: string): Promise<SprintData | null> {
+  const config = getConfig();
+  const spField =
+    config.storyPointsField || (await discoverAndCacheField());
+  const fields = getIssueFields(spField);
+
+  const sprints = await fetchSprintsForBoard(boardId, "active");
+  if (sprints.length === 0) return null;
+
+  const sprint = sprints[0];
+  const issues = await fetchSprintIssues(sprint.id, fields);
+
+  return aggregateSprintData(sprint, issues, spField || "");
+}
+
+// Fetch sprint data - defaults to first board or aggregates all boards
 export async function getActiveSprintData(): Promise<SprintData | null> {
   const config = getConfig();
+
+  // If only one board, use single board approach
+  if (config.boardIds.length === 1) {
+    return getActiveSprintDataForBoard(config.boardIds[0]);
+  }
+
   const spField =
     config.storyPointsField || (await discoverAndCacheField());
   const fields = getIssueFields(spField);

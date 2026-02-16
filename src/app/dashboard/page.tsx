@@ -1,12 +1,15 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useSprintData } from "@/lib/hooks/use-dashboard-data";
 import { StatCard } from "./components/stat-card";
 import { ProgressBar } from "./components/progress-bar";
 import { BurndownChart } from "./components/burndown-chart";
 
 export default function DashboardPage() {
-  const { data, error, isLoading } = useSprintData();
+  const searchParams = useSearchParams();
+  const boardId = searchParams.get("board") || undefined;
+  const { data, error, isLoading } = useSprintData(boardId);
 
   if (isLoading) {
     return <LoadingSkeleton />;
