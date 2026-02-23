@@ -21,7 +21,11 @@ async function resolveInitiativeField(
 ): Promise<string | null> {
   if (configField) return configField;
   if (cachedInitiativeField !== undefined) return cachedInitiativeField;
-  cachedInitiativeField = await discoverInitiativeField();
+  try {
+    cachedInitiativeField = await discoverInitiativeField();
+  } catch {
+    cachedInitiativeField = null;
+  }
   return cachedInitiativeField;
 }
 
