@@ -93,7 +93,9 @@ export interface BacklogData {
   dimensions: BacklogDimension[];
   alerts: BacklogAlert[];
   totalItems: number;
-  estimatedItems: number;
+  readyItems: number;
+  blockedItems: number;
+  strategicAllocationPct: number;
   staleItems: number;
   zombieItems: number;
 }
@@ -107,10 +109,18 @@ export interface BacklogDimension {
 }
 
 export interface BacklogAlert {
-  type: "stale" | "zombie" | "unestimated" | "priority_inflation";
+  type:
+    | "stale"
+    | "zombie"
+    | "unestimated"
+    | "priority_inflation"
+    | "blocked"
+    | "low_readiness"
+    | "no_initiative"
+    | "low_sprint_coverage";
   message: string;
   count: number;
-  issues: string[]; // issue keys
+  issues: string[];
 }
 
 export interface ChildIssue {
@@ -292,9 +302,9 @@ export interface BoardBacklogSummary {
   healthScore: number;
   stats: {
     totalItems: number;
-    estimatedItems: number;
-    staleItems: number;
-    zombieItems: number;
+    readyItems: number;
+    blockedItems: number;
+    strategicAllocationPct: number;
   };
   dimensions: BacklogDimension[];
   alerts: BacklogAlert[];
@@ -306,9 +316,9 @@ export interface OverviewBacklogResponse {
   aggregate: {
     healthScore: number;
     totalItems: number;
-    estimatedItems: number;
-    staleItems: number;
-    zombieItems: number;
+    readyItems: number;
+    blockedItems: number;
+    strategicAllocationPct: number;
     dimensions: BacklogDimension[];
     alerts: BacklogAlert[];
   };
@@ -328,4 +338,6 @@ export interface DashboardConfig {
   backlogIsrTtl: number;
   reportDay: number;
   storyPointsField: string | null;
+  initiativeField: string | null;
+  readyStatuses: string[];
 }

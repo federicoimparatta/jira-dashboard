@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCronSecret, getConfig } from "@/lib/jira/config";
 import { getActiveSprintData, computeCycleTimes } from "@/lib/jira/sprint";
-import { fetchBacklogIssues } from "@/lib/jira/client";
+import { fetchBacklogIssues, discoverInitiativeField } from "@/lib/jira/client";
 import { getIssueFields } from "@/lib/jira/fields";
 import { scoreBacklogHealth } from "@/lib/scoring/backlog-health";
 import { getDatabase } from "@/db";
+import { getAvgVelocity } from "@/db/velocity";
 import {
   sprintSnapshots,
   backlogSnapshots,
@@ -87,23 +88,26 @@ export async function POST(request: NextRequest) {
 
     // 2. Fetch and snapshot backlog
     const spField = config.storyPointsField || "customfield_10016";
-    const fields = getIssueFields(spField);
+    const initField = config.initiativeField || (await discoverInitiativeField());
+    const fields = getIssueFields(spField, initField);
+    const avgVelocity = await getAvgVelocity();
     const backlogIssues = await fetchBacklogIssues(fields);
     const backlogData = scoreBacklogHealth(backlogIssues, {
       staleDays: config.staleDays,
       zombieDays: config.zombieDays,
       storyPointsField: spField,
-      avgVelocity: null,
+      initiativeField: initField,
+      readyStatuses: config.readyStatuses,
+      avgVelocity,
     });
 
     await db.insert(backlogSnapshots).values({
       snapshotDate: today,
       healthScore: backlogData.healthScore,
       totalItems: backlogData.totalItems,
-      estimatedItems: backlogData.estimatedItems,
+      estimatedItems: backlogData.readyItems,
       staleCount: backlogData.staleItems,
-      unestimatedCount:
-        backlogData.totalItems - backlogData.estimatedItems,
+      unestimatedCount: backlogData.blockedItems,
       zombieCount: backlogData.zombieItems,
       dimensionsJson: backlogData.dimensions,
     });

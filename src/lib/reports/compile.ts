@@ -1,8 +1,9 @@
 import { getActiveSprintData, computeCycleTimes } from "../jira/sprint";
-import { fetchBacklogIssues } from "../jira/client";
+import { fetchBacklogIssues, discoverInitiativeField } from "../jira/client";
 import { getConfig } from "../jira/config";
 import { getIssueFields } from "../jira/fields";
 import { scoreBacklogHealth } from "../scoring/backlog-health";
+import { getAvgVelocity } from "@/db/velocity";
 import { getDatabase } from "@/db";
 import { velocityHistory } from "@/db/schema";
 import { desc } from "drizzle-orm";
@@ -15,7 +16,7 @@ export async function compileWeeklyReport(): Promise<WeeklyReport> {
   // Fetch current sprint data
   const sprintData = await getActiveSprintData();
 
-  // Fetch velocity history
+  // Fetch velocity history for trend
   const velHistory = await db
     .select()
     .from(velocityHistory)
@@ -24,17 +25,17 @@ export async function compileWeeklyReport(): Promise<WeeklyReport> {
 
   // Fetch backlog
   const spField = config.storyPointsField || "customfield_10016";
-  const fields = getIssueFields(spField);
+  const initField = config.initiativeField || (await discoverInitiativeField());
+  const fields = getIssueFields(spField, initField);
+  const avgVelocity = await getAvgVelocity();
   const backlogIssues = await fetchBacklogIssues(fields);
   const backlogData = scoreBacklogHealth(backlogIssues, {
     staleDays: config.staleDays,
     zombieDays: config.zombieDays,
     storyPointsField: spField,
-    avgVelocity:
-      velHistory.length > 0
-        ? velHistory.reduce((s, v) => s + (v.completedPoints || 0), 0) /
-          velHistory.length
-        : null,
+    initiativeField: initField,
+    readyStatuses: config.readyStatuses,
+    avgVelocity,
   });
 
   // Compute cycle times

@@ -1,12 +1,29 @@
 import { NextResponse } from "next/server";
-import { fetchBacklogIssuesForBoard, fetchBoardName } from "@/lib/jira/client";
+import {
+  fetchBacklogIssuesForBoard,
+  fetchBoardName,
+  discoverInitiativeField,
+} from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
 import { scoreBacklogHealth } from "@/lib/scoring/backlog-health";
-import type { OverviewBacklogResponse } from "@/lib/jira/types";
+import { getAvgVelocity } from "@/db/velocity";
+import type { OverviewBacklogResponse, JiraIssue } from "@/lib/jira/types";
 
 export const revalidate = 1800; // 30 minutes ISR TTL
 export const maxDuration = 300;
+
+// Cache initiative field discovery across requests within the same process
+let cachedInitiativeField: string | null | undefined = undefined;
+
+async function resolveInitiativeField(
+  configField: string | null
+): Promise<string | null> {
+  if (configField) return configField;
+  if (cachedInitiativeField !== undefined) return cachedInitiativeField;
+  cachedInitiativeField = await discoverInitiativeField();
+  return cachedInitiativeField;
+}
 
 export async function GET(request: Request) {
   try {
@@ -14,18 +31,22 @@ export async function GET(request: Request) {
     const boardParam = searchParams.get("board");
     const config = getConfig();
     const spField = config.storyPointsField || "customfield_10016";
-    const fields = getIssueFields(spField);
+
+    const initField = await resolveInitiativeField(config.initiativeField);
+    const fields = getIssueFields(spField, initField);
+    const avgVelocity = await getAvgVelocity();
 
     const scoringConfig = {
       staleDays: config.staleDays,
       zombieDays: config.zombieDays,
       storyPointsField: spField,
-      avgVelocity: null as number | null,
+      initiativeField: initField,
+      readyStatuses: config.readyStatuses,
+      avgVelocity,
     };
 
     // "All Boards" overview mode
     if (boardParam === "all" && config.boardIds.length > 1) {
-      // Fetch board names + issues per board in parallel
       const boardResults = await Promise.allSettled(
         config.boardIds.map(async (id) => {
           const [name, issues] = await Promise.all([
@@ -38,7 +59,16 @@ export async function GET(request: Request) {
 
       const successfulBoards = boardResults
         .filter((r) => r.status === "fulfilled")
-        .map((r) => (r as PromiseFulfilledResult<{ id: string; name: string; issues: import("@/lib/jira/types").JiraIssue[] }>).value);
+        .map(
+          (r) =>
+            (
+              r as PromiseFulfilledResult<{
+                id: string;
+                name: string;
+                issues: JiraIssue[];
+              }>
+            ).value
+        );
 
       // Score health per board
       const boards = successfulBoards.map((b) => {
@@ -49,9 +79,9 @@ export async function GET(request: Request) {
           healthScore: health.healthScore,
           stats: {
             totalItems: health.totalItems,
-            estimatedItems: health.estimatedItems,
-            staleItems: health.staleItems,
-            zombieItems: health.zombieItems,
+            readyItems: health.readyItems,
+            blockedItems: health.blockedItems,
+            strategicAllocationPct: health.strategicAllocationPct,
           },
           dimensions: health.dimensions,
           alerts: health.alerts,
@@ -59,7 +89,7 @@ export async function GET(request: Request) {
       });
 
       // Aggregate: deduplicate issues across boards, then score
-      const uniqueIssuesMap = new Map<string, import("@/lib/jira/types").JiraIssue>();
+      const uniqueIssuesMap = new Map<string, JiraIssue>();
       for (const b of successfulBoards) {
         for (const issue of b.issues) {
           if (!uniqueIssuesMap.has(issue.id)) {
@@ -78,9 +108,9 @@ export async function GET(request: Request) {
         aggregate: {
           healthScore: aggregateHealth.healthScore,
           totalItems: aggregateHealth.totalItems,
-          estimatedItems: aggregateHealth.estimatedItems,
-          staleItems: aggregateHealth.staleItems,
-          zombieItems: aggregateHealth.zombieItems,
+          readyItems: aggregateHealth.readyItems,
+          blockedItems: aggregateHealth.blockedItems,
+          strategicAllocationPct: aggregateHealth.strategicAllocationPct,
           dimensions: aggregateHealth.dimensions,
           alerts: aggregateHealth.alerts,
         },
@@ -93,7 +123,7 @@ export async function GET(request: Request) {
 
     // Single board or fallback aggregate
     const boardId = boardParam === "all" ? null : boardParam;
-    let issues;
+    let issues: JiraIssue[];
 
     if (boardId) {
       issues = await fetchBacklogIssuesForBoard(boardId, fields);
@@ -104,15 +134,20 @@ export async function GET(request: Request) {
 
       backlogResults.forEach((result, idx) => {
         if (result.status === "rejected") {
-          console.warn(`Failed to fetch backlog for board ${config.boardIds[idx]}:`, result.reason);
+          console.warn(
+            `Failed to fetch backlog for board ${config.boardIds[idx]}:`,
+            result.reason
+          );
         }
       });
 
       const allBacklogIssues = backlogResults
         .filter((r) => r.status === "fulfilled")
-        .flatMap((r) => (r as PromiseFulfilledResult<import("@/lib/jira/types").JiraIssue[]>).value);
+        .flatMap(
+          (r) => (r as PromiseFulfilledResult<JiraIssue[]>).value
+        );
 
-      const uniqueIssuesMap = new Map();
+      const uniqueIssuesMap = new Map<string, JiraIssue>();
       for (const issue of allBacklogIssues) {
         if (!uniqueIssuesMap.has(issue.id)) {
           uniqueIssuesMap.set(issue.id, issue);
@@ -129,9 +164,9 @@ export async function GET(request: Request) {
       alerts: backlogData.alerts,
       stats: {
         totalItems: backlogData.totalItems,
-        estimatedItems: backlogData.estimatedItems,
-        staleItems: backlogData.staleItems,
-        zombieItems: backlogData.zombieItems,
+        readyItems: backlogData.readyItems,
+        blockedItems: backlogData.blockedItems,
+        strategicAllocationPct: backlogData.strategicAllocationPct,
       },
       jiraBaseUrl: config.jiraBaseUrl,
       fetchedAt: new Date().toISOString(),

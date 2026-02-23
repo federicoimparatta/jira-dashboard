@@ -13,11 +13,17 @@ export const ISSUE_FIELDS = [
   "issuelinks",
 ];
 
-// Build field list with dynamic story points field
-export function getIssueFields(storyPointsField: string | null): string[] {
+// Build field list with dynamic story points and initiative fields
+export function getIssueFields(
+  storyPointsField: string | null,
+  initiativeField?: string | null
+): string[] {
   const fields = [...ISSUE_FIELDS];
   if (storyPointsField) {
     fields.push(storyPointsField);
+  }
+  if (initiativeField) {
+    fields.push(initiativeField);
   }
   return fields;
 }

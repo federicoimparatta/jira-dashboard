@@ -38,6 +38,11 @@ export function getConfig(): DashboardConfig {
     backlogIsrTtl: parseInt(process.env.BACKLOG_ISR_TTL || "1800", 10),
     reportDay: parseInt(process.env.REPORT_DAY || "1", 10),
     storyPointsField: process.env.STORY_POINTS_FIELD || null,
+    initiativeField: process.env.INITIATIVE_FIELD || null,
+    readyStatuses: (process.env.READY_STATUSES || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
   };
 }
 

@@ -269,6 +269,20 @@ export async function discoverStoryPointsField(): Promise<string | null> {
   return field?.id || null;
 }
 
+// Discover initiative custom field ID
+export async function discoverInitiativeField(): Promise<string | null> {
+  const fields = await jiraFetch<{ id: string; name: string }[]>(
+    "/rest/api/3/field"
+  );
+
+  const names = ["initiative", "initiative name", "initiative link"];
+  const field = fields.find((f) =>
+    names.includes(f.name.toLowerCase())
+  );
+
+  return field?.id || null;
+}
+
 // Get story points from an issue, using discovered or configured field
 export function getStoryPoints(
   issue: JiraIssue,

@@ -35,22 +35,22 @@ function BoardHealthCard({ board }: { board: BoardBacklogSummary }) {
             <div className="font-semibold text-smg-gray-900">{board.stats.totalItems}</div>
           </div>
           <div>
-            <span className="text-smg-gray-500">Estimated</span>
+            <span className="text-smg-gray-500">Ready</span>
             <div className="font-semibold text-smg-gray-900">
-              {board.stats.estimatedItems}
+              {board.stats.readyItems}
               <span className="text-smg-gray-400">/{board.stats.totalItems}</span>
             </div>
           </div>
           <div>
-            <span className="text-smg-gray-500">Stale</span>
-            <div className={`font-semibold ${board.stats.staleItems > 0 ? "text-smg-warning" : "text-smg-gray-900"}`}>
-              {board.stats.staleItems}
+            <span className="text-smg-gray-500">Blocked</span>
+            <div className={`font-semibold ${board.stats.blockedItems > 0 ? "text-smg-danger" : "text-smg-gray-900"}`}>
+              {board.stats.blockedItems}
             </div>
           </div>
           <div>
-            <span className="text-smg-gray-500">Zombies</span>
-            <div className={`font-semibold ${board.stats.zombieItems > 0 ? "text-smg-danger" : "text-smg-gray-900"}`}>
-              {board.stats.zombieItems}
+            <span className="text-smg-gray-500">Strategic %</span>
+            <div className="font-semibold text-smg-gray-900">
+              {board.stats.strategicAllocationPct}%
             </div>
           </div>
         </div>
@@ -98,19 +98,19 @@ export function BacklogOverview({ data }: { data: OverviewBacklogResponse }) {
         <div className="col-span-2 grid grid-cols-2 gap-4">
           <StatBox label="Total Items" value={aggregate.totalItems} />
           <StatBox
-            label="Estimated"
-            value={aggregate.estimatedItems}
+            label="Ready Items"
+            value={aggregate.readyItems}
             total={aggregate.totalItems}
           />
           <StatBox
-            label="Stale Items"
-            value={aggregate.staleItems}
-            variant={aggregate.staleItems > 0 ? "warning" : "default"}
+            label="Blocked Items"
+            value={aggregate.blockedItems}
+            variant={aggregate.blockedItems > 0 ? "danger" : "default"}
           />
           <StatBox
-            label="Zombie Issues"
-            value={aggregate.zombieItems}
-            variant={aggregate.zombieItems > 0 ? "danger" : "default"}
+            label="Strategic %"
+            value={aggregate.strategicAllocationPct}
+            suffix="%"
           />
         </div>
       </div>
@@ -173,11 +173,13 @@ function StatBox({
   label,
   value,
   total,
+  suffix,
   variant = "default",
 }: {
   label: string;
   value: number;
   total?: number;
+  suffix?: string;
   variant?: "default" | "warning" | "danger";
 }) {
   const accentColor =
@@ -194,7 +196,7 @@ function StatBox({
         {label}
       </div>
       <div className="mt-2 text-2xl font-bold text-smg-gray-900">
-        {value}
+        {value}{suffix}
         {total !== undefined && (
           <span className="text-sm font-normal text-smg-gray-300">
             {" "}
@@ -244,6 +246,10 @@ function AlertIcon({ type }: { type: string }) {
     zombie: "text-smg-danger bg-smg-danger/10",
     unestimated: "text-smg-blue bg-smg-blue/10",
     priority_inflation: "text-smg-purple bg-smg-purple/10",
+    blocked: "text-smg-danger bg-smg-danger/10",
+    low_readiness: "text-smg-warning bg-smg-warning/10",
+    no_initiative: "text-smg-blue bg-smg-blue/10",
+    low_sprint_coverage: "text-smg-warning bg-smg-warning/10",
   };
 
   const icons: Record<string, string> = {
@@ -251,6 +257,10 @@ function AlertIcon({ type }: { type: string }) {
     zombie: "Z",
     unestimated: "?",
     priority_inflation: "P",
+    blocked: "B",
+    low_readiness: "R",
+    no_initiative: "I",
+    low_sprint_coverage: "S",
   };
 
   return (

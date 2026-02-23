@@ -23,13 +23,23 @@ interface Alert {
   issues: string[];
 }
 
-// Tooltips for each KPI dimension
 const DIMENSION_TOOLTIPS: Record<string, string> = {
-  "Estimation Coverage": "Percentage of backlog items that have story point estimates. Higher is better - indicates better planning and predictability.",
-  "Freshness": "How recently backlog items have been updated. Items not touched in 60+ days are considered stale and may need review.",
-  "Activity": "Tracks items with no status changes in 90+ days (zombies). Active grooming keeps this metric healthy.",
-  "Priority Distribution": "Balance of priority levels. Too many high-priority items (priority inflation) indicates poor prioritization.",
-  "Size Distribution": "Mix of small, medium, and large items. Healthy backlogs have a variety of sizes for sprint flexibility.",
+  "Strategic Allocation":
+    "Percentage of story points tied to Initiatives. Higher allocation indicates better strategic alignment.",
+  "Backlog Readiness":
+    "Items with description, story points, priority, and initiative all populated. Measures sprint-readiness of the backlog.",
+  Dependencies:
+    "Percentage of backlog items that are blocked (flagged or have blocking issue links). Lower is better.",
+  "Avg Blocked Duration":
+    "Average time blocked items have been stalled, based on time since last update. Lower is better.",
+  "Priority Distribution":
+    "Balance of priority levels using Shannon entropy. Alerts if >50% are high priority.",
+  "Age Distribution":
+    "Percentage of items older than 90 days. Younger backlogs score higher.",
+  "Grooming Freshness":
+    "Percentage of items updated in the last 45 days. Regular grooming keeps this healthy.",
+  "2-Sprint Readiness":
+    "Story points in Ready status vs. 2 sprints of velocity. Measures upcoming sprint preparedness.",
 };
 
 function BacklogContent() {
@@ -86,19 +96,20 @@ function BacklogContent() {
             value={stats?.totalItems ?? 0}
           />
           <StatBox
-            label="Estimated"
-            value={stats?.estimatedItems ?? 0}
+            label="Ready Items"
+            value={stats?.readyItems ?? 0}
             total={stats?.totalItems}
           />
           <StatBox
-            label="Stale Items"
-            value={stats?.staleItems ?? 0}
-            variant={stats?.staleItems > 0 ? "warning" : "default"}
+            label="Blocked Items"
+            value={stats?.blockedItems ?? 0}
+            variant={(stats?.blockedItems ?? 0) > 0 ? "danger" : "default"}
           />
           <StatBox
-            label="Zombie Issues"
-            value={stats?.zombieItems ?? 0}
-            variant={stats?.zombieItems > 0 ? "danger" : "default"}
+            label="Strategic %"
+            value={stats?.strategicAllocationPct ?? 0}
+            suffix="%"
+            variant={(stats?.strategicAllocationPct ?? 0) < 30 ? "warning" : "default"}
           />
         </div>
       </div>
@@ -159,11 +170,13 @@ function StatBox({
   label,
   value,
   total,
+  suffix,
   variant = "default",
 }: {
   label: string;
   value: number;
   total?: number;
+  suffix?: string;
   variant?: "default" | "warning" | "danger";
 }) {
   const accentColor =
@@ -178,7 +191,7 @@ function StatBox({
       <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${accentColor}`} />
       <div className="text-xs font-semibold uppercase tracking-wider text-smg-gray-500">{label}</div>
       <div className="mt-2 text-2xl font-bold text-smg-gray-900">
-        {value}
+        {value}{suffix}
         {total !== undefined && (
           <span className="text-sm font-normal text-smg-gray-300">
             {" "}
@@ -255,6 +268,10 @@ function AlertIcon({ type }: { type: string }) {
     zombie: "text-smg-danger bg-smg-danger/10",
     unestimated: "text-smg-blue bg-smg-blue/10",
     priority_inflation: "text-smg-purple bg-smg-purple/10",
+    blocked: "text-smg-danger bg-smg-danger/10",
+    low_readiness: "text-smg-warning bg-smg-warning/10",
+    no_initiative: "text-smg-blue bg-smg-blue/10",
+    low_sprint_coverage: "text-smg-warning bg-smg-warning/10",
   };
 
   const icons: Record<string, string> = {
@@ -262,6 +279,10 @@ function AlertIcon({ type }: { type: string }) {
     zombie: "Z",
     unestimated: "?",
     priority_inflation: "P",
+    blocked: "B",
+    low_readiness: "R",
+    no_initiative: "I",
+    low_sprint_coverage: "S",
   };
 
   return (
