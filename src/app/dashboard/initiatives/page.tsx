@@ -27,6 +27,14 @@ function InitiativesContent() {
   const { data, error, isLoading } = useInitiativesData();
   const typedData = data as InitiativesApiResponse | undefined;
 
+  const boardNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const board of typedData?.boards ?? []) {
+      map.set(board.id, board.name);
+    }
+    return map;
+  }, [typedData?.boards]);
+
   if (isLoading) return <LoadingSkeleton />;
 
   if (error || typedData?.error) {
@@ -45,14 +53,6 @@ function InitiativesContent() {
 
   const summary = typedData?.summary;
   const initiatives = typedData?.initiatives ?? [];
-
-  const boardNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const board of typedData?.boards ?? []) {
-      map.set(board.id, board.name);
-    }
-    return map;
-  }, [typedData?.boards]);
 
   return (
     <div className="space-y-6">
