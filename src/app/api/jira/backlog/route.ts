@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import {
   fetchBacklogIssuesForBoard,
   fetchBoardName,
-  discoverInitiativeField,
-  resolveInitiativeLinkedIssues,
 } from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
@@ -14,22 +12,6 @@ import type { OverviewBacklogResponse, JiraIssue } from "@/lib/jira/types";
 export const revalidate = 1800; // 30 minutes ISR TTL
 export const maxDuration = 300;
 
-// Cache initiative field discovery across requests within the same process
-let cachedInitiativeField: string | null | undefined = undefined;
-
-async function resolveInitiativeField(
-  configField: string | null
-): Promise<string | null> {
-  if (configField) return configField;
-  if (cachedInitiativeField !== undefined) return cachedInitiativeField;
-  try {
-    cachedInitiativeField = await discoverInitiativeField();
-  } catch {
-    cachedInitiativeField = null;
-  }
-  return cachedInitiativeField;
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -37,15 +19,13 @@ export async function GET(request: Request) {
     const config = getConfig();
     const spField = config.storyPointsField || "customfield_10016";
 
-    const initField = await resolveInitiativeField(config.initiativeField);
-    const fields = getIssueFields(spField, initField);
+    const fields = getIssueFields(spField);
     const avgVelocity = await getAvgVelocity();
 
     const scoringConfig = {
       staleDays: config.staleDays,
       zombieDays: config.zombieDays,
       storyPointsField: spField,
-      initiativeField: initField,
       readyStatuses: config.readyStatuses,
       avgVelocity,
     };
@@ -75,25 +55,9 @@ export async function GET(request: Request) {
             ).value
         );
 
-      // Deduplicate issues across boards for aggregate + initiative resolution
-      const uniqueIssuesMap = new Map<string, JiraIssue>();
-      for (const b of successfulBoards) {
-        for (const issue of b.issues) {
-          if (!uniqueIssuesMap.has(issue.id)) {
-            uniqueIssuesMap.set(issue.id, issue);
-          }
-        }
-      }
-
-      // Resolve initiative links via parent chain (single batch for all boards)
-      const initiativeLinkedIssueKeys = await resolveInitiativeLinkedIssues(
-        Array.from(uniqueIssuesMap.values())
-      );
-      const enrichedConfig = { ...scoringConfig, initiativeLinkedIssueKeys };
-
       // Score health per board
       const boards = successfulBoards.map((b) => {
-        const health = scoreBacklogHealth(b.issues, enrichedConfig);
+        const health = scoreBacklogHealth(b.issues, scoringConfig);
         return {
           boardId: b.id,
           boardName: b.name,
@@ -102,16 +66,24 @@ export async function GET(request: Request) {
             totalItems: health.totalItems,
             readyItems: health.readyItems,
             blockedItems: health.blockedItems,
-            strategicAllocationPct: health.strategicAllocationPct,
           },
           dimensions: health.dimensions,
           alerts: health.alerts,
         };
       });
 
+      // Aggregate: deduplicate issues across boards, then score
+      const uniqueIssuesMap = new Map<string, JiraIssue>();
+      for (const b of successfulBoards) {
+        for (const issue of b.issues) {
+          if (!uniqueIssuesMap.has(issue.id)) {
+            uniqueIssuesMap.set(issue.id, issue);
+          }
+        }
+      }
       const aggregateHealth = scoreBacklogHealth(
         Array.from(uniqueIssuesMap.values()),
-        enrichedConfig
+        scoringConfig
       );
 
       const response: OverviewBacklogResponse = {
@@ -122,7 +94,6 @@ export async function GET(request: Request) {
           totalItems: aggregateHealth.totalItems,
           readyItems: aggregateHealth.readyItems,
           blockedItems: aggregateHealth.blockedItems,
-          strategicAllocationPct: aggregateHealth.strategicAllocationPct,
           dimensions: aggregateHealth.dimensions,
           alerts: aggregateHealth.alerts,
         },
@@ -168,11 +139,7 @@ export async function GET(request: Request) {
       issues = Array.from(uniqueIssuesMap.values());
     }
 
-    const initiativeLinkedIssueKeys = await resolveInitiativeLinkedIssues(issues);
-    const backlogData = scoreBacklogHealth(issues, {
-      ...scoringConfig,
-      initiativeLinkedIssueKeys,
-    });
+    const backlogData = scoreBacklogHealth(issues, scoringConfig);
 
     const response = {
       healthScore: backlogData.healthScore,
@@ -182,7 +149,6 @@ export async function GET(request: Request) {
         totalItems: backlogData.totalItems,
         readyItems: backlogData.readyItems,
         blockedItems: backlogData.blockedItems,
-        strategicAllocationPct: backlogData.strategicAllocationPct,
       },
       jiraBaseUrl: config.jiraBaseUrl,
       fetchedAt: new Date().toISOString(),

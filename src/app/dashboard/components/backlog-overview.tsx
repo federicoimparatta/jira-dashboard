@@ -47,12 +47,6 @@ function BoardHealthCard({ board }: { board: BoardBacklogSummary }) {
               {board.stats.blockedItems}
             </div>
           </div>
-          <div>
-            <span className="text-smg-gray-500">Strategic %</span>
-            <div className="font-semibold text-smg-gray-900">
-              {board.stats.strategicAllocationPct}%
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -106,11 +100,6 @@ export function BacklogOverview({ data }: { data: OverviewBacklogResponse }) {
             label="Blocked Items"
             value={aggregate.blockedItems}
             variant={aggregate.blockedItems > 0 ? "danger" : "default"}
-          />
-          <StatBox
-            label="Strategic %"
-            value={aggregate.strategicAllocationPct}
-            suffix="%"
           />
         </div>
       </div>
@@ -248,7 +237,6 @@ function AlertIcon({ type }: { type: string }) {
     priority_inflation: "text-smg-purple bg-smg-purple/10",
     blocked: "text-smg-danger bg-smg-danger/10",
     low_readiness: "text-smg-warning bg-smg-warning/10",
-    no_initiative: "text-smg-blue bg-smg-blue/10",
     low_sprint_coverage: "text-smg-warning bg-smg-warning/10",
   };
 
@@ -259,7 +247,6 @@ function AlertIcon({ type }: { type: string }) {
     priority_inflation: "P",
     blocked: "B",
     low_readiness: "R",
-    no_initiative: "I",
     low_sprint_coverage: "S",
   };
 

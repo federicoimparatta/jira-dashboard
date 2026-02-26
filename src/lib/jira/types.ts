@@ -95,7 +95,6 @@ export interface BacklogData {
   totalItems: number;
   readyItems: number;
   blockedItems: number;
-  strategicAllocationPct: number;
   staleItems: number;
   zombieItems: number;
 }
@@ -116,7 +115,6 @@ export interface BacklogAlert {
     | "priority_inflation"
     | "blocked"
     | "low_readiness"
-    | "no_initiative"
     | "low_sprint_coverage";
   message: string;
   count: number;
@@ -166,6 +164,10 @@ export interface EpicProgress {
   updated: string;
   children: ChildIssue[];
   boardIds: string[];
+  initiative?: {
+    key: string;
+    summary: string;
+  };
 }
 
 export interface BoardGroup {
@@ -304,7 +306,7 @@ export interface BoardBacklogSummary {
     totalItems: number;
     readyItems: number;
     blockedItems: number;
-    strategicAllocationPct: number;
+
   };
   dimensions: BacklogDimension[];
   alerts: BacklogAlert[];
@@ -318,7 +320,7 @@ export interface OverviewBacklogResponse {
     totalItems: number;
     readyItems: number;
     blockedItems: number;
-    strategicAllocationPct: number;
+
     dimensions: BacklogDimension[];
     alerts: BacklogAlert[];
   };

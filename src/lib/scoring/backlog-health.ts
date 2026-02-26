@@ -5,22 +5,8 @@ export interface ScoringConfig {
   staleDays: number;
   zombieDays: number;
   storyPointsField: string;
-  initiativeField: string | null;
-  initiativeLinkedIssueKeys?: Set<string>;
   readyStatuses: string[];
   avgVelocity: number | null;
-}
-
-function hasInitiativeLink(issue: JiraIssue, config: ScoringConfig): boolean {
-  // Direct initiative field on the issue
-  if (config.initiativeField && issue.fields[config.initiativeField]) {
-    return true;
-  }
-  // Parent chain: issue → epic → initiative (resolved ahead of time)
-  if (config.initiativeLinkedIssueKeys && config.initiativeLinkedIssueKeys.has(issue.key)) {
-    return true;
-  }
-  return false;
 }
 
 export function scoreBacklogHealth(
@@ -31,58 +17,8 @@ export function scoreBacklogHealth(
   const alerts: BacklogAlert[] = [];
   const now = new Date();
 
-  const canResolveInitiatives =
-    !!config.initiativeField ||
-    (config.initiativeLinkedIssueKeys && config.initiativeLinkedIssueKeys.size > 0);
-
-  // ── 1. Strategic Allocation % (15%) ──────────────────────────────
-  // SP with initiative / total SP
-  let strategicAllocationPct = 0;
-  if (canResolveInitiatives) {
-    let spWithInitiative = 0;
-    let totalSP = 0;
-    for (const issue of issues) {
-      const sp = getStoryPoints(issue, config.storyPointsField);
-      totalSP += sp;
-      if (hasInitiativeLink(issue, config) && sp > 0) {
-        spWithInitiative += sp;
-      }
-    }
-    strategicAllocationPct = totalSP > 0 ? spWithInitiative / totalSP : 0;
-    const strategicScore = Math.min(100, (strategicAllocationPct / 0.7) * 100);
-    dimensions.push({
-      name: "Strategic Allocation",
-      weight: 0.15,
-      score: Math.round(strategicScore),
-      weightedScore: Math.round(strategicScore * 0.15),
-      detail: `${Math.round(strategicAllocationPct * 100)}% of story points tied to initiatives`,
-    });
-
-    if (strategicAllocationPct < 0.3) {
-      const unlinked = issues.filter(
-        (i) =>
-          !hasInitiativeLink(i, config) &&
-          getStoryPoints(i, config.storyPointsField) > 0
-      );
-      alerts.push({
-        type: "no_initiative",
-        message: `${Math.round(strategicAllocationPct * 100)}% strategic allocation — ${unlinked.length} estimated items not linked to an initiative`,
-        count: unlinked.length,
-        issues: unlinked.slice(0, 20).map((i) => i.key),
-      });
-    }
-  } else {
-    dimensions.push({
-      name: "Strategic Allocation",
-      weight: 0.15,
-      score: 50,
-      weightedScore: Math.round(50 * 0.15),
-      detail: "No initiative field configured — score neutral",
-    });
-  }
-
-  // ── 2. Backlog Readiness % (20%) ─────────────────────────────────
-  // Composite: description>100 + SP>0 + priority + initiative all populated
+  // ── 1. Backlog Readiness % (25%) ─────────────────────────────────
+  // Composite: description>100 + SP>0 + priority all populated
   const readyItems = issues.filter((i) => {
     const hasDescription = (() => {
       const desc = i.fields.description;
@@ -93,19 +29,16 @@ export function scoreBacklogHealth(
     const hasPoints = getStoryPoints(i, config.storyPointsField) > 0;
     const hasPriority =
       !!i.fields.priority?.name && i.fields.priority.name !== "None";
-    const hasInitiative = canResolveInitiatives
-      ? hasInitiativeLink(i, config)
-      : true;
-    return hasDescription && hasPoints && hasPriority && hasInitiative;
+    return hasDescription && hasPoints && hasPriority;
   });
   const readinessRatio =
     issues.length > 0 ? readyItems.length / issues.length : 0;
   const readinessScore = Math.min(100, (readinessRatio / 0.7) * 100);
   dimensions.push({
     name: "Backlog Readiness",
-    weight: 0.2,
+    weight: 0.25,
     score: Math.round(readinessScore),
-    weightedScore: Math.round(readinessScore * 0.2),
+    weightedScore: Math.round(readinessScore * 0.25),
     detail: `${readyItems.length}/${issues.length} items fully defined (${Math.round(readinessRatio * 100)}%)`,
   });
 
@@ -118,7 +51,7 @@ export function scoreBacklogHealth(
     });
   }
 
-  // ── 3. Dependencies (10%) ────────────────────────────────────────
+  // ── 2. Dependencies (10%) ────────────────────────────────────────
   // Merge flagged field + issuelinks blocking type
   const blockedIssues = issues.filter((i) => {
     if (i.fields.flagged) return true;
@@ -160,7 +93,7 @@ export function scoreBacklogHealth(
     });
   }
 
-  // ── 4. Avg Blocked Duration (5%) ─────────────────────────────────
+  // ── 3. Avg Blocked Duration (5%) ─────────────────────────────────
   // Proxy: now - updated for blocked items
   let avgBlockedDays = 0;
   if (blockedIssues.length > 0) {
@@ -187,7 +120,7 @@ export function scoreBacklogHealth(
         : "No blocked items",
   });
 
-  // ── 5. Priority Distribution (10%) ───────────────────────────────
+  // ── 4. Priority Distribution (10%) ───────────────────────────────
   const priorityCounts: Record<string, number> = {};
   for (const issue of issues) {
     const p = issue.fields.priority?.name || "None";
@@ -218,7 +151,7 @@ export function scoreBacklogHealth(
     });
   }
 
-  // ── 6. Age Distribution (10%) ────────────────────────────────────
+  // ── 5. Age Distribution (15%) ────────────────────────────────────
   const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
   const staleCount90 = issues.filter(
     (i) => new Date(i.fields.created) < ninetyDaysAgo
@@ -227,13 +160,13 @@ export function scoreBacklogHealth(
   const ageScore = Math.max(0, 100 - (staleRatio / 0.1) * 100);
   dimensions.push({
     name: "Age Distribution",
-    weight: 0.1,
+    weight: 0.15,
     score: Math.round(Math.max(0, Math.min(100, ageScore))),
-    weightedScore: Math.round(Math.max(0, Math.min(100, ageScore)) * 0.1),
+    weightedScore: Math.round(Math.max(0, Math.min(100, ageScore)) * 0.15),
     detail: `${staleCount90}/${issues.length} older than 90d (${Math.round(staleRatio * 100)}%)`,
   });
 
-  // ── 7. Grooming Freshness (15%) ──────────────────────────────────
+  // ── 6. Grooming Freshness (15%) ──────────────────────────────────
   const fortyFiveDaysAgo = new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000);
   const recentlyUpdated = issues.filter(
     (i) => new Date(i.fields.updated) >= fortyFiveDaysAgo
@@ -249,7 +182,7 @@ export function scoreBacklogHealth(
     detail: `${recentlyUpdated.length}/${issues.length} updated in last 45d (${Math.round(groomingRatio * 100)}%)`,
   });
 
-  // ── 8. 2-Sprint Readiness Coverage (15%) ─────────────────────────
+  // ── 7. 2-Sprint Readiness Coverage (20%) ─────────────────────────
   let sprintReadyScore = 50; // default if no velocity
   if (config.avgVelocity && config.avgVelocity > 0) {
     let readySP: number;
@@ -278,9 +211,9 @@ export function scoreBacklogHealth(
 
     dimensions.push({
       name: "2-Sprint Readiness",
-      weight: 0.15,
+      weight: 0.2,
       score: Math.round(sprintReadyScore),
-      weightedScore: Math.round(sprintReadyScore * 0.15),
+      weightedScore: Math.round(sprintReadyScore * 0.2),
       detail: `${readySP.toFixed(0)} ready SP / ${twoSprintTarget.toFixed(0)} target (${Math.round(coverageRatio * 100)}%)`,
     });
 
@@ -295,9 +228,9 @@ export function scoreBacklogHealth(
   } else {
     dimensions.push({
       name: "2-Sprint Readiness",
-      weight: 0.15,
+      weight: 0.2,
       score: 50,
-      weightedScore: Math.round(50 * 0.15),
+      weightedScore: Math.round(50 * 0.2),
       detail: "No velocity data — score neutral",
     });
   }
@@ -359,7 +292,6 @@ export function scoreBacklogHealth(
     totalItems: issues.length,
     readyItems: readyItems.length,
     blockedItems: blockedIssues.length,
-    strategicAllocationPct: Math.round(strategicAllocationPct * 100),
     staleItems: staleItems.length,
     zombieItems: zombieItems.length,
   };

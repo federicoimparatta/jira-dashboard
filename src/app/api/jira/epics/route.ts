@@ -27,7 +27,7 @@ export async function GET() {
     const [epics, ...boardResults] = await Promise.all([
       fetchAllIssues(
         `issuetype = Epic AND statusCategory != Done AND project = ${config.projectKey} ORDER BY priority ASC, updated DESC`,
-        ["summary", "status", "assignee", "priority", "issuetype", "updated"]
+        ["summary", "status", "assignee", "priority", "issuetype", "updated", "parent"]
       ),
       ...config.boardIds.map(async (boardId) => {
         const [boardEpics, boardName] = await Promise.all([
@@ -130,6 +130,10 @@ export async function GET() {
         });
       }
 
+      const epicParent = epic.fields.parent as
+        | { key: string; fields?: { summary?: string } }
+        | undefined;
+
       return {
         key: epic.key,
         summary: epic.fields.summary,
@@ -147,6 +151,12 @@ export async function GET() {
         updated: epic.fields.updated,
         children: childList,
         boardIds: epicBoardMap.get(epic.key) || [],
+        ...(epicParent?.key && {
+          initiative: {
+            key: epicParent.key,
+            summary: epicParent.fields?.summary || epicParent.key,
+          },
+        }),
       };
     });
 
