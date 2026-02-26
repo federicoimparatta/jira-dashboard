@@ -283,43 +283,68 @@ export async function discoverInitiativeField(): Promise<string | null> {
   return field?.id || null;
 }
 
-// Resolve which parent (epic) keys are linked to an initiative via the parent chain.
-// Collects parent keys from issues, then batch-fetches those parents to check
-// if they themselves have a parent (the initiative level).
-export async function resolveInitiativeLinkedEpics(
+// Resolve which issues are linked to an initiative via the parent chain
+// (Issue → Epic → Initiative). Uses the v3 search API independently so it
+// doesn't depend on the agile API returning the parent field.
+// Returns a Set of *issue* keys that are initiative-linked.
+export async function resolveInitiativeLinkedIssues(
   issues: JiraIssue[]
 ): Promise<Set<string>> {
-  const parentKeys = new Set<string>();
-  for (const issue of issues) {
-    const parent = issue.fields.parent as
-      | { key: string }
-      | undefined;
-    if (parent?.key) {
-      parentKeys.add(parent.key);
-    }
-  }
+  if (issues.length === 0) return new Set();
 
-  if (parentKeys.size === 0) return new Set();
+  try {
+    // Step 1: Fetch parent (epic) keys for each backlog issue
+    const issueKeys = issues.map((i) => i.key);
+    const issueToEpicKey = new Map<string, string>();
 
-  const linkedKeys = new Set<string>();
-  const keyList = Array.from(parentKeys);
-
-  // Batch in chunks of 50 to stay within JQL IN-clause limits
-  for (let i = 0; i < keyList.length; i += 50) {
-    const chunk = keyList.slice(i, i + 50);
-    const jql = `key in (${chunk.join(",")})`;
-    const epics = await fetchAllIssues(jql, ["parent"]);
-    for (const epic of epics) {
-      const epicParent = epic.fields.parent as
-        | { key: string }
-        | undefined;
-      if (epicParent?.key) {
-        linkedKeys.add(epic.key);
+    for (let i = 0; i < issueKeys.length; i += 50) {
+      const chunk = issueKeys.slice(i, i + 50);
+      const jql = `key in (${chunk.join(",")})`;
+      const results = await fetchAllIssues(jql, ["parent"]);
+      for (const issue of results) {
+        const parent = issue.fields.parent as
+          | { key: string }
+          | undefined;
+        if (parent?.key) {
+          issueToEpicKey.set(issue.key, parent.key);
+        }
       }
     }
-  }
 
-  return linkedKeys;
+    const epicKeys = new Set(issueToEpicKey.values());
+    if (epicKeys.size === 0) return new Set();
+
+    // Step 2: Check which epics have a parent (the initiative level)
+    const initiativeEpicKeys = new Set<string>();
+    const epicKeyList = Array.from(epicKeys);
+
+    for (let i = 0; i < epicKeyList.length; i += 50) {
+      const chunk = epicKeyList.slice(i, i + 50);
+      const jql = `key in (${chunk.join(",")})`;
+      const epics = await fetchAllIssues(jql, ["parent"]);
+      for (const epic of epics) {
+        const epicParent = epic.fields.parent as
+          | { key: string }
+          | undefined;
+        if (epicParent?.key) {
+          initiativeEpicKeys.add(epic.key);
+        }
+      }
+    }
+
+    // Step 3: Map back to issue keys
+    const linkedIssueKeys = new Set<string>();
+    for (const [issueKey, epicKey] of issueToEpicKey) {
+      if (initiativeEpicKeys.has(epicKey)) {
+        linkedIssueKeys.add(issueKey);
+      }
+    }
+
+    return linkedIssueKeys;
+  } catch (err) {
+    console.warn("Failed to resolve initiative-linked issues:", err);
+    return new Set();
+  }
 }
 
 // T-shirt size to story point mapping

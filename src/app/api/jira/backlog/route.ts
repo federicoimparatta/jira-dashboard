@@ -3,7 +3,7 @@ import {
   fetchBacklogIssuesForBoard,
   fetchBoardName,
   discoverInitiativeField,
-  resolveInitiativeLinkedEpics,
+  resolveInitiativeLinkedIssues,
 } from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
@@ -86,10 +86,10 @@ export async function GET(request: Request) {
       }
 
       // Resolve initiative links via parent chain (single batch for all boards)
-      const initiativeLinkedEpicKeys = await resolveInitiativeLinkedEpics(
+      const initiativeLinkedIssueKeys = await resolveInitiativeLinkedIssues(
         Array.from(uniqueIssuesMap.values())
       );
-      const enrichedConfig = { ...scoringConfig, initiativeLinkedEpicKeys };
+      const enrichedConfig = { ...scoringConfig, initiativeLinkedIssueKeys };
 
       // Score health per board
       const boards = successfulBoards.map((b) => {
@@ -168,10 +168,10 @@ export async function GET(request: Request) {
       issues = Array.from(uniqueIssuesMap.values());
     }
 
-    const initiativeLinkedEpicKeys = await resolveInitiativeLinkedEpics(issues);
+    const initiativeLinkedIssueKeys = await resolveInitiativeLinkedIssues(issues);
     const backlogData = scoreBacklogHealth(issues, {
       ...scoringConfig,
-      initiativeLinkedEpicKeys,
+      initiativeLinkedIssueKeys,
     });
 
     const response = {

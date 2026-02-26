@@ -6,7 +6,7 @@ export interface ScoringConfig {
   zombieDays: number;
   storyPointsField: string;
   initiativeField: string | null;
-  initiativeLinkedEpicKeys?: Set<string>;
+  initiativeLinkedIssueKeys?: Set<string>;
   readyStatuses: string[];
   avgVelocity: number | null;
 }
@@ -16,12 +16,9 @@ function hasInitiativeLink(issue: JiraIssue, config: ScoringConfig): boolean {
   if (config.initiativeField && issue.fields[config.initiativeField]) {
     return true;
   }
-  // Parent chain: issue → epic → initiative
-  if (config.initiativeLinkedEpicKeys && config.initiativeLinkedEpicKeys.size > 0) {
-    const parent = issue.fields.parent as { key: string } | undefined;
-    if (parent?.key && config.initiativeLinkedEpicKeys.has(parent.key)) {
-      return true;
-    }
+  // Parent chain: issue → epic → initiative (resolved ahead of time)
+  if (config.initiativeLinkedIssueKeys && config.initiativeLinkedIssueKeys.has(issue.key)) {
+    return true;
   }
   return false;
 }
@@ -36,7 +33,7 @@ export function scoreBacklogHealth(
 
   const canResolveInitiatives =
     !!config.initiativeField ||
-    (config.initiativeLinkedEpicKeys && config.initiativeLinkedEpicKeys.size > 0);
+    (config.initiativeLinkedIssueKeys && config.initiativeLinkedIssueKeys.size > 0);
 
   // ── 1. Strategic Allocation % (15%) ──────────────────────────────
   // SP with initiative / total SP

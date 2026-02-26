@@ -1,5 +1,5 @@
 import { getActiveSprintData, computeCycleTimes } from "../jira/sprint";
-import { fetchBacklogIssues, discoverInitiativeField, resolveInitiativeLinkedEpics } from "../jira/client";
+import { fetchBacklogIssues, discoverInitiativeField, resolveInitiativeLinkedIssues } from "../jira/client";
 import { getConfig } from "../jira/config";
 import { getIssueFields } from "../jira/fields";
 import { scoreBacklogHealth } from "../scoring/backlog-health";
@@ -29,13 +29,13 @@ export async function compileWeeklyReport(): Promise<WeeklyReport> {
   const fields = getIssueFields(spField, initField);
   const avgVelocity = await getAvgVelocity();
   const backlogIssues = await fetchBacklogIssues(fields);
-  const initiativeLinkedEpicKeys = await resolveInitiativeLinkedEpics(backlogIssues);
+  const initiativeLinkedIssueKeys = await resolveInitiativeLinkedIssues(backlogIssues);
   const backlogData = scoreBacklogHealth(backlogIssues, {
     staleDays: config.staleDays,
     zombieDays: config.zombieDays,
     storyPointsField: spField,
     initiativeField: initField,
-    initiativeLinkedEpicKeys,
+    initiativeLinkedIssueKeys,
     readyStatuses: config.readyStatuses,
     avgVelocity,
   });
