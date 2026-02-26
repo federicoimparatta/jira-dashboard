@@ -325,7 +325,7 @@ export function scoreBacklogHealth(
   if (unestimated.length > 0) {
     alerts.push({
       type: "unestimated",
-      message: `${unestimated.length} stories without story points`,
+      message: `${unestimated.length} stories without estimates`,
       count: unestimated.length,
       issues: unestimated.slice(0, 20).map((i) => i.key),
     });

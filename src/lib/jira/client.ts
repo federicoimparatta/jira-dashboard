@@ -283,6 +283,27 @@ export async function discoverInitiativeField(): Promise<string | null> {
   return field?.id || null;
 }
 
+// T-shirt size to story point mapping
+const TSHIRT_TO_SP: Record<string, number> = {
+  xs: 1,
+  s: 2,
+  m: 5,
+  l: 8,
+  xl: 13,
+  xxl: 21,
+};
+
+function parseTShirtSize(raw: unknown): number {
+  const str =
+    typeof raw === "string"
+      ? raw
+      : raw && typeof raw === "object" && "value" in raw
+        ? String((raw as { value: unknown }).value)
+        : null;
+  if (!str) return 0;
+  return TSHIRT_TO_SP[str.trim().toLowerCase()] ?? 0;
+}
+
 // Get story points from an issue, using discovered or configured field
 export function getStoryPoints(
   issue: JiraIssue,
@@ -290,5 +311,5 @@ export function getStoryPoints(
 ): number {
   const value = issue.fields[storyPointsField];
   if (typeof value === "number") return value;
-  return 0;
+  return parseTShirtSize(value);
 }
