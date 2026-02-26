@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PdfExportButton } from "./pdf-export-button";
 
 const links = [
   { href: "/dashboard", label: "Sprint" },
@@ -95,8 +96,8 @@ export function DashboardNav() {
             )}
           </div>
 
-          {/* Navigation tabs */}
-          <div className="flex gap-1">
+          {/* Navigation tabs + export */}
+          <div className="flex items-center gap-1">
             {links.map((link) => {
               const isActive =
                 link.href === "/dashboard"
@@ -120,6 +121,9 @@ export function DashboardNav() {
                 </Link>
               );
             })}
+            <div className="ml-2 border-l border-white/20 pl-2">
+              <PdfExportButton />
+            </div>
           </div>
         </div>
       </div>
