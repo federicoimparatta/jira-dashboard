@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { fetchAllIssues, getStoryPoints } from "@/lib/jira/client";
+import {
+  fetchAllIssues,
+  fetchBoardEpics,
+  fetchBoardName,
+  getStoryPoints,
+} from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
 import type {
@@ -17,11 +22,36 @@ export async function GET() {
     const spField = config.storyPointsField || "customfield_10016";
     const fields = [...getIssueFields(spField), "parent"];
 
-    // Step 1: Fetch all non-done epics
-    const epics = await fetchAllIssues(
-      `issuetype = Epic AND statusCategory != Done AND project = ${config.projectKey} ORDER BY priority ASC, updated DESC`,
-      ["summary", "status", "assignee", "priority", "issuetype", "updated", "parent"]
-    );
+    // Step 1: Fetch all non-done epics + board mappings in parallel
+    const [epics, ...boardResults] = await Promise.all([
+      fetchAllIssues(
+        `issuetype = Epic AND statusCategory != Done AND project = ${config.projectKey} ORDER BY priority ASC, updated DESC`,
+        ["summary", "status", "assignee", "priority", "issuetype", "updated", "parent"]
+      ),
+      ...config.boardIds.map(async (boardId) => {
+        const [boardEpics, boardName] = await Promise.all([
+          fetchBoardEpics(boardId),
+          fetchBoardName(boardId),
+        ]);
+        return { boardId, boardName, epicKeys: boardEpics.map((e) => e.key) };
+      }),
+    ]);
+
+    // Build epicKey -> boardId[] mapping
+    const epicBoardMap = new Map<string, string[]>();
+    for (const { boardId, epicKeys: keys } of boardResults) {
+      for (const key of keys) {
+        const existing = epicBoardMap.get(key) || [];
+        existing.push(boardId);
+        epicBoardMap.set(key, existing);
+      }
+    }
+
+    // Build boardId -> boardName mapping
+    const boardNameMap = new Map<string, string>();
+    for (const { boardId, boardName } of boardResults) {
+      boardNameMap.set(boardId, boardName);
+    }
 
     // Step 2: Filter to epics that belong to an initiative (have a parent)
     const epicsWithInitiative = epics.filter((epic) => {
@@ -138,6 +168,7 @@ export async function GET() {
             id: epic.fields.priority.id,
           },
           assignee: epic.fields.assignee?.displayName || null,
+          boardIds: epicBoardMap.get(epic.key) || [],
           childIssues,
           storyPoints,
         };
@@ -184,8 +215,15 @@ export async function GET() {
     const totalDoneStoryPoints = initiatives.reduce((s, i) => s + i.storyPoints.done, 0);
     const totalEpics = initiatives.reduce((s, i) => s + i.epicCount, 0);
 
+    // Board name lookup for the frontend
+    const boards = config.boardIds.map((id) => ({
+      id,
+      name: boardNameMap.get(id) || `Board ${id}`,
+    }));
+
     return NextResponse.json({
       initiatives,
+      boards,
       summary: {
         totalInitiatives: initiatives.length,
         totalEpics,

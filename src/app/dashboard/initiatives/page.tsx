@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useInitiativesData } from "@/lib/hooks/use-dashboard-data";
 import { StatCard } from "../components/stat-card";
 import { InitiativeCard } from "./initiative-card";
@@ -8,6 +8,7 @@ import type { InitiativeProgress } from "@/lib/jira/types";
 
 interface InitiativesApiResponse {
   initiatives: InitiativeProgress[];
+  boards?: { id: string; name: string }[];
   summary: {
     totalInitiatives: number;
     totalEpics: number;
@@ -44,6 +45,14 @@ function InitiativesContent() {
 
   const summary = typedData?.summary;
   const initiatives = typedData?.initiatives ?? [];
+
+  const boardNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const board of typedData?.boards ?? []) {
+      map.set(board.id, board.name);
+    }
+    return map;
+  }, [typedData?.boards]);
 
   return (
     <div className="space-y-6">
@@ -107,6 +116,7 @@ function InitiativesContent() {
           key={initiative.key}
           initiative={initiative}
           jiraBaseUrl={typedData?.jiraBaseUrl}
+          boardNameMap={boardNameMap}
         />
       ))}
 

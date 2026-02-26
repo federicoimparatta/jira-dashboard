@@ -14,9 +14,10 @@ const statusColors: Record<string, string> = {
 interface InitiativeCardProps {
   initiative: InitiativeProgress;
   jiraBaseUrl?: string;
+  boardNameMap?: Map<string, string>;
 }
 
-export function InitiativeCard({ initiative, jiraBaseUrl }: InitiativeCardProps) {
+export function InitiativeCard({ initiative, jiraBaseUrl, boardNameMap }: InitiativeCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const completionPct = Math.round(initiative.completionRate * 100);
@@ -123,6 +124,18 @@ export function InitiativeCard({ initiative, jiraBaseUrl }: InitiativeCardProps)
                       >
                         {epic.status.name}
                       </span>
+                      {boardNameMap && epic.boardIds.length > 0 && (
+                        <>
+                          {epic.boardIds.map((bid) => (
+                            <span
+                              key={bid}
+                              className="rounded bg-smg-blue/10 px-1.5 py-0.5 text-[10px] font-medium text-smg-blue"
+                            >
+                              {boardNameMap.get(bid) || `Board ${bid}`}
+                            </span>
+                          ))}
+                        </>
+                      )}
                     </div>
                     <p className="mt-0.5 truncate text-sm text-smg-gray-700">
                       {epic.summary}
