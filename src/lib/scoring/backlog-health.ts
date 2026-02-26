@@ -6,8 +6,24 @@ export interface ScoringConfig {
   zombieDays: number;
   storyPointsField: string;
   initiativeField: string | null;
+  initiativeLinkedEpicKeys?: Set<string>;
   readyStatuses: string[];
   avgVelocity: number | null;
+}
+
+function hasInitiativeLink(issue: JiraIssue, config: ScoringConfig): boolean {
+  // Direct initiative field on the issue
+  if (config.initiativeField && issue.fields[config.initiativeField]) {
+    return true;
+  }
+  // Parent chain: issue → epic → initiative
+  if (config.initiativeLinkedEpicKeys && config.initiativeLinkedEpicKeys.size > 0) {
+    const parent = issue.fields.parent as { key: string } | undefined;
+    if (parent?.key && config.initiativeLinkedEpicKeys.has(parent.key)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function scoreBacklogHealth(
@@ -18,16 +34,20 @@ export function scoreBacklogHealth(
   const alerts: BacklogAlert[] = [];
   const now = new Date();
 
+  const canResolveInitiatives =
+    !!config.initiativeField ||
+    (config.initiativeLinkedEpicKeys && config.initiativeLinkedEpicKeys.size > 0);
+
   // ── 1. Strategic Allocation % (15%) ──────────────────────────────
   // SP with initiative / total SP
   let strategicAllocationPct = 0;
-  if (config.initiativeField) {
+  if (canResolveInitiatives) {
     let spWithInitiative = 0;
     let totalSP = 0;
     for (const issue of issues) {
       const sp = getStoryPoints(issue, config.storyPointsField);
       totalSP += sp;
-      if (issue.fields[config.initiativeField] && sp > 0) {
+      if (hasInitiativeLink(issue, config) && sp > 0) {
         spWithInitiative += sp;
       }
     }
@@ -44,7 +64,7 @@ export function scoreBacklogHealth(
     if (strategicAllocationPct < 0.3) {
       const unlinked = issues.filter(
         (i) =>
-          !i.fields[config.initiativeField!] &&
+          !hasInitiativeLink(i, config) &&
           getStoryPoints(i, config.storyPointsField) > 0
       );
       alerts.push({
@@ -76,8 +96,8 @@ export function scoreBacklogHealth(
     const hasPoints = getStoryPoints(i, config.storyPointsField) > 0;
     const hasPriority =
       !!i.fields.priority?.name && i.fields.priority.name !== "None";
-    const hasInitiative = config.initiativeField
-      ? !!i.fields[config.initiativeField]
+    const hasInitiative = canResolveInitiatives
+      ? hasInitiativeLink(i, config)
       : true;
     return hasDescription && hasPoints && hasPriority && hasInitiative;
   });

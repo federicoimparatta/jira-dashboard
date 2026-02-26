@@ -283,6 +283,45 @@ export async function discoverInitiativeField(): Promise<string | null> {
   return field?.id || null;
 }
 
+// Resolve which parent (epic) keys are linked to an initiative via the parent chain.
+// Collects parent keys from issues, then batch-fetches those parents to check
+// if they themselves have a parent (the initiative level).
+export async function resolveInitiativeLinkedEpics(
+  issues: JiraIssue[]
+): Promise<Set<string>> {
+  const parentKeys = new Set<string>();
+  for (const issue of issues) {
+    const parent = issue.fields.parent as
+      | { key: string }
+      | undefined;
+    if (parent?.key) {
+      parentKeys.add(parent.key);
+    }
+  }
+
+  if (parentKeys.size === 0) return new Set();
+
+  const linkedKeys = new Set<string>();
+  const keyList = Array.from(parentKeys);
+
+  // Batch in chunks of 50 to stay within JQL IN-clause limits
+  for (let i = 0; i < keyList.length; i += 50) {
+    const chunk = keyList.slice(i, i + 50);
+    const jql = `key in (${chunk.join(",")})`;
+    const epics = await fetchAllIssues(jql, ["parent"]);
+    for (const epic of epics) {
+      const epicParent = epic.fields.parent as
+        | { key: string }
+        | undefined;
+      if (epicParent?.key) {
+        linkedKeys.add(epic.key);
+      }
+    }
+  }
+
+  return linkedKeys;
+}
+
 // T-shirt size to story point mapping
 const TSHIRT_TO_SP: Record<string, number> = {
   xs: 1,

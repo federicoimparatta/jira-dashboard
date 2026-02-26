@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCronSecret, getConfig } from "@/lib/jira/config";
 import { getActiveSprintData, computeCycleTimes } from "@/lib/jira/sprint";
-import { fetchBacklogIssues, discoverInitiativeField } from "@/lib/jira/client";
+import { fetchBacklogIssues, discoverInitiativeField, resolveInitiativeLinkedEpics } from "@/lib/jira/client";
 import { getIssueFields } from "@/lib/jira/fields";
 import { scoreBacklogHealth } from "@/lib/scoring/backlog-health";
 import { getDatabase } from "@/db";
@@ -92,11 +92,13 @@ export async function POST(request: NextRequest) {
     const fields = getIssueFields(spField, initField);
     const avgVelocity = await getAvgVelocity();
     const backlogIssues = await fetchBacklogIssues(fields);
+    const initiativeLinkedEpicKeys = await resolveInitiativeLinkedEpics(backlogIssues);
     const backlogData = scoreBacklogHealth(backlogIssues, {
       staleDays: config.staleDays,
       zombieDays: config.zombieDays,
       storyPointsField: spField,
       initiativeField: initField,
+      initiativeLinkedEpicKeys,
       readyStatuses: config.readyStatuses,
       avgVelocity,
     });

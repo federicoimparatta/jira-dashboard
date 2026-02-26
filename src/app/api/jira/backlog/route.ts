@@ -3,6 +3,7 @@ import {
   fetchBacklogIssuesForBoard,
   fetchBoardName,
   discoverInitiativeField,
+  resolveInitiativeLinkedEpics,
 } from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
@@ -74,9 +75,25 @@ export async function GET(request: Request) {
             ).value
         );
 
+      // Deduplicate issues across boards for aggregate + initiative resolution
+      const uniqueIssuesMap = new Map<string, JiraIssue>();
+      for (const b of successfulBoards) {
+        for (const issue of b.issues) {
+          if (!uniqueIssuesMap.has(issue.id)) {
+            uniqueIssuesMap.set(issue.id, issue);
+          }
+        }
+      }
+
+      // Resolve initiative links via parent chain (single batch for all boards)
+      const initiativeLinkedEpicKeys = await resolveInitiativeLinkedEpics(
+        Array.from(uniqueIssuesMap.values())
+      );
+      const enrichedConfig = { ...scoringConfig, initiativeLinkedEpicKeys };
+
       // Score health per board
       const boards = successfulBoards.map((b) => {
-        const health = scoreBacklogHealth(b.issues, scoringConfig);
+        const health = scoreBacklogHealth(b.issues, enrichedConfig);
         return {
           boardId: b.id,
           boardName: b.name,
@@ -92,18 +109,9 @@ export async function GET(request: Request) {
         };
       });
 
-      // Aggregate: deduplicate issues across boards, then score
-      const uniqueIssuesMap = new Map<string, JiraIssue>();
-      for (const b of successfulBoards) {
-        for (const issue of b.issues) {
-          if (!uniqueIssuesMap.has(issue.id)) {
-            uniqueIssuesMap.set(issue.id, issue);
-          }
-        }
-      }
       const aggregateHealth = scoreBacklogHealth(
         Array.from(uniqueIssuesMap.values()),
-        scoringConfig
+        enrichedConfig
       );
 
       const response: OverviewBacklogResponse = {
@@ -160,7 +168,11 @@ export async function GET(request: Request) {
       issues = Array.from(uniqueIssuesMap.values());
     }
 
-    const backlogData = scoreBacklogHealth(issues, scoringConfig);
+    const initiativeLinkedEpicKeys = await resolveInitiativeLinkedEpics(issues);
+    const backlogData = scoreBacklogHealth(issues, {
+      ...scoringConfig,
+      initiativeLinkedEpicKeys,
+    });
 
     const response = {
       healthScore: backlogData.healthScore,

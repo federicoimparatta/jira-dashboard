@@ -11,6 +11,7 @@ export const ISSUE_FIELDS = [
   "flagged",
   "labels",
   "issuelinks",
+  "parent",
 ];
 
 // Build field list with dynamic story points and initiative fields
