@@ -343,3 +343,23 @@ export interface DashboardConfig {
   initiativeField: string | null;
   readyStatuses: string[];
 }
+
+export interface InitiativeEpicSummary {
+  key: string;
+  summary: string;
+  status: { name: string; categoryKey: string };
+  priority: { name: string; id: string };
+  assignee: string | null;
+  childIssues: { total: number; done: number; inProgress: number; todo: number };
+  storyPoints: { total: number; done: number; inProgress: number; todo: number };
+}
+
+export interface InitiativeProgress {
+  key: string;
+  summary: string;
+  epicCount: number;
+  epics: InitiativeEpicSummary[];
+  childIssues: { total: number; done: number; inProgress: number; todo: number };
+  storyPoints: { total: number; done: number; inProgress: number; todo: number };
+  completionRate: number;
+}

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 const links = [
   { href: "/dashboard", label: "Sprint" },
   { href: "/dashboard/backlog", label: "Backlog Health" },
+  { href: "/dashboard/initiatives", label: "Initiatives" },
   { href: "/dashboard/epics", label: "Epics" },
 ];
 
@@ -51,7 +52,7 @@ export function DashboardNav() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const isEpicsPage = pathname === "/dashboard/epics";
+  const isCrossBoardPage = pathname === "/dashboard/epics" || pathname === "/dashboard/initiatives";
 
   return (
     <nav className="smg-gradient-nav shadow-lg">
@@ -74,7 +75,7 @@ export function DashboardNav() {
             </div>
 
             {/* Board selector (hidden on cross-board pages like Epics) */}
-            {boards.length > 1 && !isEpicsPage && (
+            {boards.length > 1 && !isCrossBoardPage && (
               <div className="hidden sm:block">
                 <select
                   value={selectedBoard}
@@ -102,7 +103,7 @@ export function DashboardNav() {
                   ? pathname === "/dashboard"
                   : pathname.startsWith(link.href);
               const href =
-                link.href === "/dashboard/epics"
+                link.href === "/dashboard/epics" || link.href === "/dashboard/initiatives"
                   ? link.href
                   : `${link.href}${selectedBoard ? `?board=${selectedBoard}` : ""}`;
               return (
@@ -124,7 +125,7 @@ export function DashboardNav() {
       </div>
 
       {/* Mobile board selector (hidden on cross-board pages like Epics) */}
-      {boards.length > 1 && !isEpicsPage && (
+      {boards.length > 1 && !isCrossBoardPage && (
         <div className="border-t border-white/10 px-4 py-2 sm:hidden">
           <select
             value={selectedBoard}

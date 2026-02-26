@@ -29,3 +29,11 @@ export function useEpicsData() {
     dedupingInterval: 60_000,
   });
 }
+
+export function useInitiativesData() {
+  return useSWR("/api/jira/initiatives", fetcher, {
+    refreshInterval: 120_000,
+    revalidateOnFocus: true,
+    dedupingInterval: 60_000,
+  });
+}
