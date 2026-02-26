@@ -3,10 +3,19 @@
 import { useState } from "react";
 import { generateDashboardPdf } from "@/lib/pdf/generate-report";
 
+const EXPORT_PASSWORD = "pdf";
+
 export function PdfExportButton() {
   const [loading, setLoading] = useState(false);
 
   async function handleExport() {
+    const entered = prompt("Enter password to export:");
+    if (entered === null) return; // cancelled
+    if (entered !== EXPORT_PASSWORD) {
+      alert("Incorrect password.");
+      return;
+    }
+
     setLoading(true);
     try {
       await generateDashboardPdf();

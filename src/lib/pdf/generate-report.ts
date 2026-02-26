@@ -394,9 +394,12 @@ function addBacklogSection(doc: jsPDF, data: BacklogData) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(36);
   doc.setTextColor(...color);
-  doc.text(`${Math.round(score)}`, MARGIN, y + 16);
+  const scoreStr = `${Math.round(score)}`;
+  doc.text(scoreStr, MARGIN, y + 16);
+  const scoreWidth = doc.getTextWidth(scoreStr); // measure while still at size 36
   doc.setFontSize(14);
-  doc.text("/100", MARGIN + doc.getTextWidth(`${Math.round(score)}`) + 2, y + 16);
+  doc.setTextColor(...GRAY_500);
+  doc.text("/100", MARGIN + scoreWidth + 2, y + 16);
   y += 24;
 
   const stats = data.aggregate ?? data.stats;
@@ -604,16 +607,11 @@ export async function generateDashboardPdf(): Promise<void> {
   const [sprint, backlog, initiatives, epics]: [SprintData, BacklogData, InitiativesData, EpicsData] =
     await Promise.all([sprintRes.json(), backlogRes.json(), initiativesRes.json(), epicsRes.json()]);
 
-  // 2. Create password-protected PDF
+  // 2. Create PDF
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
-    encryption: {
-      userPassword: "pdf",
-      ownerPassword: "pdf",
-      userPermissions: ["print", "copy"],
-    },
   });
 
   // 3. Build the report
