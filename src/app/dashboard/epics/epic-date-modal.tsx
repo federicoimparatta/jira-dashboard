@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { EpicProgress } from "@/lib/jira/types";
 import { useEpicDateUpdate } from "@/lib/hooks/use-epic-dates";
@@ -27,6 +27,65 @@ function daysBetween(start: string, end: string): number {
   const a = new Date(start + "T00:00:00");
   const b = new Date(end + "T00:00:00");
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [editing, setEditing] = useState(!!value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleSetDate() {
+    setEditing(true);
+    // Focus the input after it renders
+    setTimeout(() => inputRef.current?.showPicker?.(), 0);
+  }
+
+  function handleClear() {
+    onChange("");
+    setEditing(false);
+  }
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
+        {label}
+      </label>
+      {editing ? (
+        <div className="flex items-center gap-2">
+          <input
+            ref={inputRef}
+            type="date"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="flex-1 rounded-lg border border-smg-gray-200 px-3 py-2 text-sm text-smg-gray-700 outline-none transition-colors focus:border-smg-blue focus:ring-1 focus:ring-smg-blue/20"
+          />
+          <button
+            onClick={handleClear}
+            className="rounded-lg px-2 py-2 text-xs text-smg-gray-500 transition-colors hover:bg-smg-gray-50 hover:text-smg-danger"
+          >
+            Clear
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={handleSetDate}
+          className="flex w-full items-center gap-2 rounded-lg border border-dashed border-smg-gray-200 px-3 py-2 text-sm text-smg-gray-300 transition-colors hover:border-smg-blue hover:text-smg-blue"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Not set — click to add
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function EpicDateModal({
@@ -143,51 +202,19 @@ export function EpicDateModal({
         {/* Date inputs */}
         <div className="mt-5 space-y-4">
           {startDateField && (
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
-                Start Date
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1 rounded-lg border border-smg-gray-200 px-3 py-2 text-sm text-smg-gray-700 outline-none transition-colors focus:border-smg-blue focus:ring-1 focus:ring-smg-blue/20"
-                />
-                {startDate && (
-                  <button
-                    onClick={() => setStartDate("")}
-                    className="rounded-lg px-2 py-2 text-xs text-smg-gray-500 transition-colors hover:bg-smg-gray-50 hover:text-smg-danger"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
+            <DateField
+              label="Start Date"
+              value={startDate}
+              onChange={setStartDate}
+            />
           )}
 
           {endDateField && (
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
-                End Date
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1 rounded-lg border border-smg-gray-200 px-3 py-2 text-sm text-smg-gray-700 outline-none transition-colors focus:border-smg-blue focus:ring-1 focus:ring-smg-blue/20"
-                />
-                {endDate && (
-                  <button
-                    onClick={() => setEndDate("")}
-                    className="rounded-lg px-2 py-2 text-xs text-smg-gray-500 transition-colors hover:bg-smg-gray-50 hover:text-smg-danger"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
+            <DateField
+              label="End Date"
+              value={endDate}
+              onChange={setEndDate}
+            />
           )}
 
           {/* Duration display */}
