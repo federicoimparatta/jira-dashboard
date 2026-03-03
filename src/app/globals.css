@@ -184,3 +184,18 @@ select.smg-select {
 .smg-progress-wip {
   background: linear-gradient(90deg, var(--smg-blue), var(--smg-blue-light));
 }
+
+/* Modal overlay */
+.smg-modal-overlay {
+  background: rgba(15, 27, 53, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+@keyframes smg-modal-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.smg-modal-enter {
+  animation: smg-modal-enter 0.2s ease-out;
+}

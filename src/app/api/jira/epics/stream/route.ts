@@ -4,6 +4,7 @@ import {
   fetchBoardEpics,
   fetchBoardName,
   getStoryPoints,
+  discoverDateFields,
 } from "@/lib/jira/client";
 import { getConfig } from "@/lib/jira/config";
 import { getIssueFields } from "@/lib/jira/fields";
@@ -17,12 +18,27 @@ export async function GET() {
     const spField = config.storyPointsField || "customfield_10016";
     const fields = [...getIssueFields(spField), "parent"];
 
+    // Discover date fields
+    let startDateField = config.startDateField;
+    let endDateField = config.endDateField;
+    if (!startDateField || !endDateField) {
+      const discovered = await discoverDateFields();
+      startDateField = startDateField || discovered.startDateField;
+      endDateField = endDateField || discovered.endDateField;
+    }
+
+    const epicFields = [
+      "summary", "status", "assignee", "priority", "issuetype", "updated", "parent", "description",
+      ...(startDateField ? [startDateField] : []),
+      ...(endDateField ? [endDateField] : []),
+    ];
+
     onProgress({ stage: "epics", message: "Fetching active epics...", percent: 5 });
 
     const [epics, ...boardResults] = await Promise.all([
       fetchAllIssues(
         `issuetype = Epic AND statusCategory != Done AND project = ${config.projectKey} ORDER BY priority ASC, updated DESC`,
-        ["summary", "status", "assignee", "priority", "issuetype", "updated", "parent", "description"]
+        epicFields
       ),
       ...config.boardIds.map(async (boardId) => {
         const [boardEpics, boardName] = await Promise.all([
@@ -149,6 +165,12 @@ export async function GET() {
         children: childList,
         boardIds: epicBoardMap.get(epic.key) || [],
         readiness: { score, criteria },
+        startDate: startDateField
+          ? (epic.fields[startDateField] as string | null) ?? null
+          : null,
+        endDate: endDateField
+          ? (epic.fields[endDateField] as string | null) ?? null
+          : null,
         ...(epicParent?.key && {
           initiative: { key: epicParent.key, summary: epicParent.fields?.summary || epicParent.key },
         }),
@@ -193,6 +215,7 @@ export async function GET() {
         readyEpics,
       },
       jiraBaseUrl: config.jiraBaseUrl,
+      dateFields: { startDateField, endDateField },
       fetchedAt: new Date().toISOString(),
     };
   });

@@ -4,10 +4,17 @@ import { useState, useMemo } from "react";
 import type { BoardGroup, EpicProgress } from "@/lib/jira/types";
 import { ExpandableEpicCard } from "./epic-card-expandable";
 
+interface DateFields {
+  startDateField: string | null;
+  endDateField: string | null;
+}
+
 interface BoardSectionProps {
   board: BoardGroup;
   defaultExpanded?: boolean;
   jiraBaseUrl?: string;
+  dateFields?: DateFields | null;
+  onEpicUpdated?: () => void;
 }
 
 interface InitiativeGroup {
@@ -20,6 +27,8 @@ export function BoardSection({
   board,
   defaultExpanded = true,
   jiraBaseUrl,
+  dateFields,
+  onEpicUpdated,
 }: BoardSectionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
@@ -103,6 +112,8 @@ export function BoardSection({
               key={initiative.key}
               initiative={initiative}
               jiraBaseUrl={jiraBaseUrl}
+              dateFields={dateFields}
+              onEpicUpdated={onEpicUpdated}
             />
           ))}
 
@@ -122,6 +133,8 @@ export function BoardSection({
                     key={epic.key}
                     epic={epic}
                     jiraBaseUrl={jiraBaseUrl}
+                    dateFields={dateFields}
+                    onEpicUpdated={onEpicUpdated}
                   />
                 ))}
               </div>
@@ -136,9 +149,13 @@ export function BoardSection({
 function InitiativeSection({
   initiative,
   jiraBaseUrl,
+  dateFields,
+  onEpicUpdated,
 }: {
   initiative: InitiativeGroup;
   jiraBaseUrl?: string;
+  dateFields?: DateFields | null;
+  onEpicUpdated?: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
 
@@ -211,6 +228,8 @@ function InitiativeSection({
               key={epic.key}
               epic={epic}
               jiraBaseUrl={jiraBaseUrl}
+              dateFields={dateFields}
+              onEpicUpdated={onEpicUpdated}
             />
           ))}
         </div>

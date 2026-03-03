@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { EpicProgress, ChildIssue } from "@/lib/jira/types";
 import { ProgressBar } from "../components/progress-bar";
 import { JiraLink } from "../components/jira-link";
+import { EpicDateModal } from "./epic-date-modal";
 
 const statusBadgeColors: Record<string, string> = {
   done: "bg-smg-teal/10 text-smg-teal",
@@ -118,8 +119,29 @@ function ChildIssueRow({ child, jiraBaseUrl }: { child: ChildIssue; jiraBaseUrl?
   );
 }
 
-export function ExpandableEpicCard({ epic, jiraBaseUrl }: { epic: EpicProgress; jiraBaseUrl?: string }) {
+interface DateFields {
+  startDateField: string | null;
+  endDateField: string | null;
+}
+
+function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export function ExpandableEpicCard({
+  epic,
+  jiraBaseUrl,
+  dateFields,
+  onEpicUpdated,
+}: {
+  epic: EpicProgress;
+  jiraBaseUrl?: string;
+  dateFields?: DateFields | null;
+  onEpicUpdated?: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
 
   const completionPercent =
     epic.childIssues.total > 0
@@ -204,7 +226,7 @@ export function ExpandableEpicCard({ epic, jiraBaseUrl }: { epic: EpicProgress; 
       </div>
 
       {/* Bottom stats row */}
-      <div className="mt-3 flex gap-6 text-xs text-smg-gray-500">
+      <div className="mt-3 flex items-center gap-6 text-xs text-smg-gray-500">
         <span>
           <span className="font-semibold text-smg-gray-700">
             {epic.childIssues.done}/{epic.childIssues.total}
@@ -219,7 +241,43 @@ export function ExpandableEpicCard({ epic, jiraBaseUrl }: { epic: EpicProgress; 
             pts done ({spCompletionPercent}%)
           </span>
         )}
+        {(epic.startDate || epic.endDate) && (
+          <span className="flex items-center gap-1">
+            <svg className="h-3.5 w-3.5 text-smg-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {epic.startDate && formatDateShort(epic.startDate)}
+            {epic.startDate && epic.endDate && " \u2192 "}
+            {epic.endDate && formatDateShort(epic.endDate)}
+          </span>
+        )}
+        {dateFields && (dateFields.startDateField || dateFields.endDateField) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDateModal(true);
+            }}
+            className="ml-auto rounded p-1 text-smg-gray-300 transition-colors hover:bg-smg-gray-50 hover:text-smg-blue"
+            title="Edit dates"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        )}
       </div>
+
+      {/* Date edit modal */}
+      {showDateModal && dateFields && (
+        <EpicDateModal
+          epic={epic}
+          jiraBaseUrl={jiraBaseUrl}
+          startDateField={dateFields.startDateField}
+          endDateField={dateFields.endDateField}
+          onClose={() => setShowDateModal(false)}
+          onSaved={() => onEpicUpdated?.()}
+        />
+      )}
 
       {/* Expanded child issues */}
       {expanded && (

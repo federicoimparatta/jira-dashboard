@@ -269,6 +269,35 @@ export async function discoverStoryPointsField(): Promise<string | null> {
   return field?.id || null;
 }
 
+// Discover date fields for epics (start date + end/due date)
+export async function discoverDateFields(): Promise<{
+  startDateField: string | null;
+  endDateField: string | null;
+}> {
+  const fields = await jiraFetch<
+    { id: string; name: string; schema?: { type: string } }[]
+  >("/rest/api/3/field");
+
+  const startNames = ["start date", "startdate", "target start", "planned start"];
+  const startField = fields.find(
+    (f) =>
+      startNames.includes(f.name.toLowerCase()) &&
+      f.schema?.type === "date"
+  );
+
+  const endNames = ["end date", "target end", "planned end"];
+  const endField = fields.find(
+    (f) =>
+      endNames.includes(f.name.toLowerCase()) &&
+      f.schema?.type === "date"
+  );
+
+  return {
+    startDateField: startField?.id || null,
+    endDateField: endField?.id || fields.find((f) => f.id === "duedate")?.id || null,
+  };
+}
+
 // T-shirt size to story point mapping
 const TSHIRT_TO_SP: Record<string, number> = {
   xs: 1,

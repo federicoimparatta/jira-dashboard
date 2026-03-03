@@ -179,6 +179,8 @@ export interface EpicProgress {
       hasChildren: boolean;
     };
   };
+  startDate: string | null;
+  endDate: string | null;
 }
 
 export interface BoardGroup {
@@ -379,6 +381,8 @@ export interface DashboardConfig {
   reportDay: number;
   storyPointsField: string | null;
   initiativeField: string | null;
+  startDateField: string | null;
+  endDateField: string | null;
   readyStatuses: string[];
 }
 

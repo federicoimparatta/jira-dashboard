@@ -39,6 +39,8 @@ export function getConfig(): DashboardConfig {
     reportDay: parseInt(process.env.REPORT_DAY || "1", 10),
     storyPointsField: process.env.STORY_POINTS_FIELD || null,
     initiativeField: process.env.INITIATIVE_FIELD || null,
+    startDateField: process.env.START_DATE_FIELD || null,
+    endDateField: process.env.END_DATE_FIELD || null,
     readyStatuses: (process.env.READY_STATUSES || "")
       .split(",")
       .map((s) => s.trim())

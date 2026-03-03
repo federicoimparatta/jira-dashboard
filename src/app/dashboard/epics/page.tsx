@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useMemo, useCallback } from "react";
+import { mutate } from "swr";
 import { useEpicsData } from "@/lib/hooks/use-dashboard-data";
 import { useStreamingData } from "@/lib/hooks/use-streaming-data";
 import { DataLoadingProgress } from "../components/data-loading-progress";
@@ -24,6 +25,10 @@ interface EpicsApiResponse {
     readyEpics: number;
   };
   jiraBaseUrl?: string;
+  dateFields?: {
+    startDateField: string | null;
+    endDateField: string | null;
+  };
   fetchedAt: string;
   error?: string;
 }
@@ -39,6 +44,10 @@ function EpicsContent() {
   const [filters, setFilters] = useState<EpicFilters>(DEFAULT_FILTERS);
 
   const typedData = rawData as EpicsApiResponse | undefined;
+
+  const handleEpicUpdated = useCallback(() => {
+    mutate("/api/jira/epics");
+  }, []);
 
   const { filteredBoards, filteredUngrouped, statuses, teams } =
     useMemo(() => {
@@ -217,13 +226,21 @@ function EpicsContent() {
 
       {/* Board Sections */}
       {filteredBoards.map((board) => (
-        <BoardSection key={board.boardId} board={board} jiraBaseUrl={typedData?.jiraBaseUrl} />
+        <BoardSection
+          key={board.boardId}
+          board={board}
+          jiraBaseUrl={typedData?.jiraBaseUrl}
+          dateFields={typedData?.dateFields}
+          onEpicUpdated={handleEpicUpdated}
+        />
       ))}
 
       {/* Ungrouped epics */}
       {filteredUngrouped.length > 0 && (
         <BoardSection
           jiraBaseUrl={typedData?.jiraBaseUrl}
+          dateFields={typedData?.dateFields}
+          onEpicUpdated={handleEpicUpdated}
           board={{
             boardId: "__ungrouped",
             boardName: "Other",
