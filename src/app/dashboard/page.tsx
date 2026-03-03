@@ -3,6 +3,8 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSprintData } from "@/lib/hooks/use-dashboard-data";
+import { useStreamingData } from "@/lib/hooks/use-streaming-data";
+import { DataLoadingProgress } from "./components/data-loading-progress";
 import { StatCard } from "./components/stat-card";
 import { ProgressBar } from "./components/progress-bar";
 import { BurndownChart } from "./components/burndown-chart";
@@ -12,9 +14,29 @@ import { ProjectOverview } from "./components/project-overview";
 function DashboardContent() {
   const searchParams = useSearchParams();
   const boardId = searchParams.get("board") || undefined;
-  const { data, error, isLoading } = useSprintData(boardId);
+  const swr = useSprintData(boardId);
+  const streamUrl = boardId
+    ? `/api/jira/sprint/stream?board=${boardId}`
+    : "/api/jira/sprint/stream";
+  const { data, error, isLoading, progress: streamProgress } = useStreamingData({
+    swrData: swr.data,
+    swrLoading: swr.isLoading,
+    swrError: swr.error,
+    streamUrl,
+  });
 
   if (isLoading) {
+    if (streamProgress) {
+      return (
+        <DataLoadingProgress
+          title="Sprint Dashboard"
+          subtitle="Loading current sprint data from Jira..."
+          progress={streamProgress}
+        >
+          <SprintSkeleton />
+        </DataLoadingProgress>
+      );
+    }
     return <LoadingSkeleton />;
   }
 
@@ -231,10 +253,9 @@ function DashboardContent() {
   );
 }
 
-function LoadingSkeleton() {
+function SprintSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="smg-skeleton h-8 w-48" />
+    <>
       <div className="smg-skeleton h-24" />
       <div className="grid grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
@@ -242,6 +263,15 @@ function LoadingSkeleton() {
         ))}
       </div>
       <div className="smg-skeleton h-72" />
+    </>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="smg-skeleton h-8 w-48" />
+      <SprintSkeleton />
     </div>
   );
 }

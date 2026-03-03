@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useBacklogData } from "@/lib/hooks/use-dashboard-data";
+import { useStreamingData } from "@/lib/hooks/use-streaming-data";
+import { DataLoadingProgress } from "../components/data-loading-progress";
 import { HealthGauge } from "../components/health-gauge";
 import { JiraLink } from "../components/jira-link";
 import { BacklogOverview } from "../components/backlog-overview";
@@ -45,9 +47,29 @@ const DIMENSION_TOOLTIPS: Record<string, string> = {
 function BacklogContent() {
   const searchParams = useSearchParams();
   const boardId = searchParams.get("board") || undefined;
-  const { data, error, isLoading } = useBacklogData(boardId);
+  const swr = useBacklogData(boardId);
+  const streamUrl = boardId
+    ? `/api/jira/backlog/stream?board=${boardId}`
+    : "/api/jira/backlog/stream";
+  const { data, error, isLoading, progress } = useStreamingData({
+    swrData: swr.data,
+    swrLoading: swr.isLoading,
+    swrError: swr.error,
+    streamUrl,
+  });
 
   if (isLoading) {
+    if (progress) {
+      return (
+        <DataLoadingProgress
+          title="Backlog Health"
+          subtitle="Analyzing backlog data from Jira..."
+          progress={progress}
+        >
+          <BacklogSkeleton />
+        </DataLoadingProgress>
+      );
+    }
     return <LoadingSkeleton />;
   }
 
@@ -286,10 +308,9 @@ function AlertIcon({ type }: { type: string }) {
   );
 }
 
-function LoadingSkeleton() {
+function BacklogSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="smg-skeleton h-8 w-48" />
+    <>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="flex justify-center">
           <div className="smg-skeleton h-32 w-32 rounded-full" />
@@ -301,6 +322,15 @@ function LoadingSkeleton() {
         </div>
       </div>
       <div className="smg-skeleton h-64" />
+    </>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="smg-skeleton h-8 w-48" />
+      <BacklogSkeleton />
     </div>
   );
 }

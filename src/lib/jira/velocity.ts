@@ -7,32 +7,78 @@ import {
 } from "./client";
 import { getConfig } from "./config";
 import { getIssueFields } from "./fields";
-import { JiraSprint, SprintVelocityPoint, VelocityResponse } from "./types";
+import { SprintVelocityPoint, VelocityResponse } from "./types";
+
+export interface VelocityProgress {
+  stage: "init" | "board_start" | "sprint" | "board_done" | "complete";
+  message: string;
+  boardIndex?: number;
+  boardCount?: number;
+  boardName?: string;
+  sprintIndex?: number;
+  sprintCount?: number;
+  sprintName?: string;
+  /** 0-100 overall progress percentage */
+  percent: number;
+}
 
 /**
  * Fetch historical sprint velocity data from the Jira API.
  * Fetches closed sprints per board, then computes committed vs delivered points.
+ * Accepts an optional progress callback for streaming progress to the client.
  */
-export async function getVelocityData(): Promise<VelocityResponse> {
+export async function getVelocityData(
+  onProgress?: (event: VelocityProgress) => void
+): Promise<VelocityResponse> {
   const config = getConfig();
+
+  onProgress?.({
+    stage: "init",
+    message: "Discovering story points field...",
+    percent: 0,
+  });
+
   const spField =
     config.storyPointsField || (await discoverAndCacheField());
   const fields = getIssueFields(spField);
 
-  // Fetch all boards in parallel
-  const boardResults = await Promise.allSettled(
-    config.boardIds.map(async (boardId) => {
+  const boardCount = config.boardIds.length;
+
+  // Process boards sequentially so we can report progress per board
+  // (parallel would be faster but prevents meaningful progress reporting)
+  const allBoardResults: {
+    boardId: string;
+    boardName: string;
+    sprints: SprintVelocityPoint[];
+    avgVelocity: number;
+    avgCommitment: number;
+    deliveryRate: number;
+  }[] = [];
+
+  for (let boardIdx = 0; boardIdx < boardCount; boardIdx++) {
+    const boardId = config.boardIds[boardIdx];
+    const boardBasePercent = (boardIdx / boardCount) * 100;
+    const boardSlice = 100 / boardCount;
+
+    try {
+      onProgress?.({
+        stage: "board_start",
+        message: `Fetching sprints for board ${boardIdx + 1} of ${boardCount}...`,
+        boardIndex: boardIdx,
+        boardCount,
+        percent: Math.round(boardBasePercent),
+      });
+
       const [boardName, closedSprints] = await Promise.all([
         fetchBoardName(boardId),
         fetchSprintsForBoard(boardId, "closed"),
       ]);
 
-      // Also fetch active sprint to include current sprint progress
       const activeSprints = await fetchSprintsForBoard(boardId, "active");
 
       // Sort by end date descending, take last 20 sprints max
       const allSprints = [...closedSprints, ...activeSprints]
-        .filter((s) => s.startDate) // must have start date
+        .filter((s) => s.startDate)
         .sort((a, b) => {
           const dateA = a.completeDate || a.endDate || "";
           const dateB = b.completeDate || b.endDate || "";
@@ -40,9 +86,37 @@ export async function getVelocityData(): Promise<VelocityResponse> {
         })
         .slice(0, 20);
 
-      // Fetch issues for each sprint (limited concurrency to avoid rate limits)
+      const sprintCount = allSprints.length;
+
+      onProgress?.({
+        stage: "board_start",
+        message: `Loading ${sprintCount} sprints from ${boardName}...`,
+        boardIndex: boardIdx,
+        boardCount,
+        boardName,
+        sprintCount,
+        percent: Math.round(boardBasePercent + boardSlice * 0.1),
+      });
+
+      // Fetch issues for each sprint sequentially (rate limit protection)
       const sprintData: SprintVelocityPoint[] = [];
-      for (const sprint of allSprints) {
+      for (let sprintIdx = 0; sprintIdx < sprintCount; sprintIdx++) {
+        const sprint = allSprints[sprintIdx];
+
+        onProgress?.({
+          stage: "sprint",
+          message: `${boardName}: ${sprint.name} (${sprintIdx + 1}/${sprintCount})`,
+          boardIndex: boardIdx,
+          boardCount,
+          boardName,
+          sprintIndex: sprintIdx,
+          sprintCount,
+          sprintName: sprint.name,
+          percent: Math.round(
+            boardBasePercent + boardSlice * (0.1 + 0.85 * (sprintIdx / sprintCount))
+          ),
+        });
+
         try {
           const issues = await fetchSprintIssues(sprint.id, fields);
 
@@ -67,7 +141,6 @@ export async function getVelocityData(): Promise<VelocityResponse> {
               doneCount++;
             }
 
-            // Track scope additions (issues created after sprint start)
             if (sprintStart) {
               const created = new Date(issue.fields.created);
               if (created > sprintStart) {
@@ -112,7 +185,7 @@ export async function getVelocityData(): Promise<VelocityResponse> {
       );
       const count = sprintData.length || 1;
 
-      return {
+      const boardResult = {
         boardId,
         boardName,
         sprints: sprintData,
@@ -123,43 +196,43 @@ export async function getVelocityData(): Promise<VelocityResponse> {
             ? Math.round((totalCompleted / totalCommitted) * 1000) / 10
             : 0,
       };
-    })
-  );
 
-  // Collect successful boards
-  const boards = boardResults
-    .filter(
-      (r): r is PromiseFulfilledResult<{
-        boardId: string;
-        boardName: string;
-        sprints: SprintVelocityPoint[];
-        avgVelocity: number;
-        avgCommitment: number;
-        deliveryRate: number;
-      }> => r.status === "fulfilled"
-    )
-    .map((r) => r.value);
+      allBoardResults.push(boardResult);
 
-  // Log failures
-  boardResults.forEach((result, idx) => {
-    if (result.status === "rejected") {
+      onProgress?.({
+        stage: "board_done",
+        message: `Finished ${boardName} (${sprintData.length} sprints)`,
+        boardIndex: boardIdx,
+        boardCount,
+        boardName,
+        percent: Math.round(boardBasePercent + boardSlice),
+      });
+    } catch (err) {
       console.warn(
-        `Failed to fetch velocity for board ${config.boardIds[idx]}:`,
-        result.reason
+        `Failed to fetch velocity for board ${boardId}:`,
+        err
       );
     }
-  });
+  }
 
   // Merge all sprints for the combined view, sorted chronologically
-  const allSprints = boards
+  const allSprints = allBoardResults
     .flatMap((b) => b.sprints)
     .sort((a, b) => a.sprintEndDate.localeCompare(b.sprintEndDate));
 
-  return {
-    boards,
+  const result: VelocityResponse = {
+    boards: allBoardResults,
     allSprints,
     fetchedAt: new Date().toISOString(),
   };
+
+  onProgress?.({
+    stage: "complete",
+    message: "Done",
+    percent: 100,
+  });
+
+  return result;
 }
 
 let cachedField: string | null = null;

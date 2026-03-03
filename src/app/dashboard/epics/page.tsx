@@ -2,6 +2,8 @@
 
 import { Suspense, useState, useMemo } from "react";
 import { useEpicsData } from "@/lib/hooks/use-dashboard-data";
+import { useStreamingData } from "@/lib/hooks/use-streaming-data";
+import { DataLoadingProgress } from "../components/data-loading-progress";
 import { StatCard } from "../components/stat-card";
 import { BoardSection } from "./board-section";
 import {
@@ -26,10 +28,16 @@ interface EpicsApiResponse {
 }
 
 function EpicsContent() {
-  const { data, error, isLoading } = useEpicsData();
+  const swr = useEpicsData();
+  const { data: rawData, error, isLoading, progress } = useStreamingData({
+    swrData: swr.data,
+    swrLoading: swr.isLoading,
+    swrError: swr.error,
+    streamUrl: "/api/jira/epics/stream",
+  });
   const [filters, setFilters] = useState<EpicFilters>(DEFAULT_FILTERS);
 
-  const typedData = data as EpicsApiResponse | undefined;
+  const typedData = rawData as EpicsApiResponse | undefined;
 
   const { filteredBoards, filteredUngrouped, statuses, teams } =
     useMemo(() => {
@@ -80,7 +88,20 @@ function EpicsContent() {
       return { filteredBoards, filteredUngrouped, statuses, teams };
     }, [typedData, filters]);
 
-  if (isLoading) return <LoadingSkeleton />;
+  if (isLoading) {
+    if (progress) {
+      return (
+        <DataLoadingProgress
+          title="Epics Overview"
+          subtitle="Loading epic data from Jira..."
+          progress={progress}
+        >
+          <EpicsSkeleton />
+        </DataLoadingProgress>
+      );
+    }
+    return <LoadingSkeleton />;
+  }
 
   if (error || typedData?.error) {
     return (
@@ -231,10 +252,9 @@ function EpicsContent() {
   );
 }
 
-function LoadingSkeleton() {
+function EpicsSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="smg-skeleton h-8 w-48" />
+    <>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="smg-skeleton h-24" />
@@ -244,6 +264,15 @@ function LoadingSkeleton() {
       {[...Array(5)].map((_, i) => (
         <div key={i} className="smg-skeleton h-32" />
       ))}
+    </>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="smg-skeleton h-8 w-48" />
+      <EpicsSkeleton />
     </div>
   );
 }

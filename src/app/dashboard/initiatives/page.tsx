@@ -2,6 +2,8 @@
 
 import { Suspense, useMemo } from "react";
 import { useInitiativesData } from "@/lib/hooks/use-dashboard-data";
+import { useStreamingData } from "@/lib/hooks/use-streaming-data";
+import { DataLoadingProgress } from "../components/data-loading-progress";
 import { StatCard } from "../components/stat-card";
 import { InitiativeCard } from "./initiative-card";
 import type { InitiativeProgress } from "@/lib/jira/types";
@@ -24,8 +26,14 @@ interface InitiativesApiResponse {
 }
 
 function InitiativesContent() {
-  const { data, error, isLoading } = useInitiativesData();
-  const typedData = data as InitiativesApiResponse | undefined;
+  const swr = useInitiativesData();
+  const { data: rawData, error, isLoading, progress } = useStreamingData({
+    swrData: swr.data,
+    swrLoading: swr.isLoading,
+    swrError: swr.error,
+    streamUrl: "/api/jira/initiatives/stream",
+  });
+  const typedData = rawData as InitiativesApiResponse | undefined;
 
   const boardNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -35,7 +43,20 @@ function InitiativesContent() {
     return map;
   }, [typedData?.boards]);
 
-  if (isLoading) return <LoadingSkeleton />;
+  if (isLoading) {
+    if (progress) {
+      return (
+        <DataLoadingProgress
+          title="Initiatives Overview"
+          subtitle="Loading initiative data from Jira..."
+          progress={progress}
+        >
+          <InitiativesSkeleton />
+        </DataLoadingProgress>
+      );
+    }
+    return <LoadingSkeleton />;
+  }
 
   if (error || typedData?.error) {
     return (
@@ -132,10 +153,9 @@ function InitiativesContent() {
   );
 }
 
-function LoadingSkeleton() {
+function InitiativesSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="smg-skeleton h-8 w-48" />
+    <>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="smg-skeleton h-24" />
@@ -144,6 +164,15 @@ function LoadingSkeleton() {
       {[...Array(3)].map((_, i) => (
         <div key={i} className="smg-skeleton h-36" />
       ))}
+    </>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="smg-skeleton h-8 w-48" />
+      <InitiativesSkeleton />
     </div>
   );
 }
