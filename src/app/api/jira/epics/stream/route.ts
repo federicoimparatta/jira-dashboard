@@ -145,7 +145,7 @@ export async function GET() {
 
       const criteria = {
         hasDescription: Boolean(epic.fields.description),
-        hasStoryPoints: storyPoints.total > 0,
+        childrenEstimated: rawChildren.length > 0 && rawChildren.every((c) => getStoryPoints(c, spField) > 0),
         hasPriority: epic.fields.priority.name !== "Medium",
         hasInitiative: Boolean(epicParent?.key),
         hasAssignee: Boolean(epic.fields.assignee),

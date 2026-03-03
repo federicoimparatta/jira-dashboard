@@ -172,7 +172,7 @@ export interface EpicProgress {
     score: number;
     criteria: {
       hasDescription: boolean;
-      hasStoryPoints: boolean;
+      childrenEstimated: boolean;
       hasPriority: boolean;
       hasInitiative: boolean;
       hasAssignee: boolean;

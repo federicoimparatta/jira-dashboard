@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { EpicProgress, ChildIssue } from "@/lib/jira/types";
 import { ProgressBar } from "../components/progress-bar";
 import { JiraLink } from "../components/jira-link";
-import { EpicDateModal } from "./epic-date-modal";
+import { useEpicDateUpdate } from "@/lib/hooks/use-epic-dates";
 
 const statusBadgeColors: Record<string, string> = {
   done: "bg-smg-teal/10 text-smg-teal",
@@ -14,7 +14,7 @@ const statusBadgeColors: Record<string, string> = {
 
 const readinessLabels: { key: keyof EpicProgress["readiness"]["criteria"]; label: string }[] = [
   { key: "hasDescription", label: "Description" },
-  { key: "hasStoryPoints", label: "Story points" },
+  { key: "childrenEstimated", label: "Children estimated" },
   { key: "hasPriority", label: "Priority" },
   { key: "hasInitiative", label: "Initiative" },
   { key: "hasAssignee", label: "Assignee" },
@@ -129,6 +129,187 @@ function formatDateShort(dateStr: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+const CalendarIcon = () => (
+  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+function DateChip({
+  label,
+  value,
+  fieldName,
+  epicKey,
+  otherDateLabel,
+  otherDateValue,
+  otherFieldName,
+  onSaved,
+}: {
+  label: string;
+  value: string | null;
+  fieldName: string | null;
+  epicKey: string;
+  otherDateLabel: string;
+  otherDateValue: string | null;
+  otherFieldName: string | null;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [dateValue, setDateValue] = useState(value || "");
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { saving, error, updateDates } = useEpicDateUpdate({
+    startDateField: label === "Start" ? fieldName : otherFieldName,
+    endDateField: label === "End" ? fieldName : otherFieldName,
+  });
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setDateValue(value || "");
+    setValidationError(null);
+  }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClickOutside(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        handleClose();
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") handleClose();
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, handleClose]);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!dateValue || !otherDateValue) {
+      setValidationError(null);
+      return;
+    }
+    if (label === "Start" && dateValue > otherDateValue) {
+      setValidationError(`Start date is after ${otherDateLabel.toLowerCase()} date`);
+    } else if (label === "End" && dateValue < otherDateValue) {
+      setValidationError(`End date is before ${otherDateLabel.toLowerCase()} date`);
+    } else {
+      setValidationError(null);
+    }
+  }, [dateValue, otherDateValue, label, otherDateLabel]);
+
+  async function handleSave() {
+    if (validationError || saving) return;
+    const newValue = dateValue || null;
+    if (newValue === (value || null)) {
+      handleClose();
+      return;
+    }
+    const startDate = label === "Start" ? newValue : (otherDateValue || null);
+    const endDate = label === "End" ? newValue : (otherDateValue || null);
+    const success = await updateDates(epicKey, startDate, endDate);
+    if (success) {
+      onSaved();
+      setOpen(false);
+    }
+  }
+
+  function handleClear() {
+    setDateValue("");
+  }
+
+  if (!fieldName) return null;
+
+  return (
+    <span className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(!open);
+        }}
+        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs transition-colors ${
+          value
+            ? "text-smg-gray-500 hover:bg-smg-gray-100 hover:text-smg-gray-700"
+            : "text-smg-gray-300 hover:bg-smg-gray-50 hover:text-smg-blue"
+        }`}
+      >
+        <CalendarIcon />
+        {value ? (
+          <span>{label}: {formatDateShort(value)}</span>
+        ) : (
+          <span>+ {label} date</span>
+        )}
+      </button>
+
+      {open && (
+        <div
+          ref={popoverRef}
+          className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-smg-gray-100 bg-white p-4 shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-smg-gray-500">
+            {label} Date
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="date"
+              value={dateValue}
+              onChange={(e) => setDateValue(e.target.value)}
+              className="flex-1 rounded-lg border border-smg-gray-200 px-3 py-2 text-sm text-smg-gray-700 outline-none transition-colors focus:border-smg-blue focus:ring-1 focus:ring-smg-blue/20"
+            />
+            {dateValue && (
+              <button
+                onClick={handleClear}
+                className="rounded-lg px-2 py-2 text-xs text-smg-gray-500 transition-colors hover:bg-smg-gray-50 hover:text-smg-danger"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {(validationError || error) && (
+            <p className="mt-2 text-[11px] text-smg-danger">{validationError || error}</p>
+          )}
+
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <button
+              onClick={handleClose}
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-smg-gray-500 transition-colors hover:bg-smg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!!validationError || saving}
+              className="flex items-center gap-1.5 rounded-lg bg-smg-blue px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-smg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving && (
+                <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              Save
+            </button>
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+
 export function ExpandableEpicCard({
   epic,
   jiraBaseUrl,
@@ -141,7 +322,6 @@ export function ExpandableEpicCard({
   onEpicUpdated?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [showDateModal, setShowDateModal] = useState(false);
 
   const completionPercent =
     epic.childIssues.total > 0
@@ -241,43 +421,34 @@ export function ExpandableEpicCard({
             pts done ({spCompletionPercent}%)
           </span>
         )}
-        {(epic.startDate || epic.endDate) && (
-          <span className="flex items-center gap-1">
-            <svg className="h-3.5 w-3.5 text-smg-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {epic.startDate && formatDateShort(epic.startDate)}
-            {epic.startDate && epic.endDate && " \u2192 "}
-            {epic.endDate && formatDateShort(epic.endDate)}
+        {dateFields && (
+          <span className="ml-auto flex items-center gap-1">
+            <DateChip
+              label="Start"
+              value={epic.startDate}
+              fieldName={dateFields.startDateField}
+              epicKey={epic.key}
+              otherDateLabel="End"
+              otherDateValue={epic.endDate}
+              otherFieldName={dateFields.endDateField}
+              onSaved={() => onEpicUpdated?.()}
+            />
+            {(epic.startDate || epic.endDate) && dateFields.startDateField && dateFields.endDateField && (
+              <span className="text-smg-gray-200">&rarr;</span>
+            )}
+            <DateChip
+              label="End"
+              value={epic.endDate}
+              fieldName={dateFields.endDateField}
+              epicKey={epic.key}
+              otherDateLabel="Start"
+              otherDateValue={epic.startDate}
+              otherFieldName={dateFields.startDateField}
+              onSaved={() => onEpicUpdated?.()}
+            />
           </span>
         )}
-        {dateFields && (dateFields.startDateField || dateFields.endDateField) && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDateModal(true);
-            }}
-            className="ml-auto rounded p-1 text-smg-gray-300 transition-colors hover:bg-smg-gray-50 hover:text-smg-blue"
-            title="Edit dates"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
-        )}
       </div>
-
-      {/* Date edit modal */}
-      {showDateModal && dateFields && (
-        <EpicDateModal
-          epic={epic}
-          jiraBaseUrl={jiraBaseUrl}
-          startDateField={dateFields.startDateField}
-          endDateField={dateFields.endDateField}
-          onClose={() => setShowDateModal(false)}
-          onSaved={() => onEpicUpdated?.()}
-        />
-      )}
 
       {/* Expanded child issues */}
       {expanded && (
