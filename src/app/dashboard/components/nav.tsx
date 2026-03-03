@@ -7,6 +7,7 @@ import { PdfExportButton } from "./pdf-export-button";
 
 const links = [
   { href: "/dashboard", label: "Sprint" },
+  { href: "/dashboard/velocity", label: "Velocity" },
   { href: "/dashboard/backlog", label: "Backlog Health" },
   { href: "/dashboard/initiatives", label: "Initiatives" },
   { href: "/dashboard/epics", label: "Epics" },
@@ -53,7 +54,7 @@ export function DashboardNav() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const isCrossBoardPage = pathname === "/dashboard/epics" || pathname === "/dashboard/initiatives";
+  const isCrossBoardPage = pathname === "/dashboard/epics" || pathname === "/dashboard/initiatives" || pathname === "/dashboard/velocity";
 
   return (
     <nav className="smg-gradient-nav shadow-lg">
@@ -104,7 +105,7 @@ export function DashboardNav() {
                   ? pathname === "/dashboard"
                   : pathname.startsWith(link.href);
               const href =
-                link.href === "/dashboard/epics" || link.href === "/dashboard/initiatives"
+                link.href === "/dashboard/epics" || link.href === "/dashboard/initiatives" || link.href === "/dashboard/velocity"
                   ? link.href
                   : `${link.href}${selectedBoard ? `?board=${selectedBoard}` : ""}`;
               return (

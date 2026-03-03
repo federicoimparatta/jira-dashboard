@@ -328,6 +328,33 @@ export interface OverviewBacklogResponse {
   fetchedAt: string;
 }
 
+export interface SprintVelocityPoint {
+  sprintId: number;
+  sprintName: string;
+  boardId: string;
+  boardName: string;
+  committedPoints: number;
+  completedPoints: number;
+  sprintStartDate: string;
+  sprintEndDate: string;
+  issueCount: number;
+  doneCount: number;
+  scopeAdded: number;
+}
+
+export interface VelocityResponse {
+  boards: {
+    boardId: string;
+    boardName: string;
+    sprints: SprintVelocityPoint[];
+    avgVelocity: number;
+    avgCommitment: number;
+    deliveryRate: number;
+  }[];
+  allSprints: SprintVelocityPoint[];
+  fetchedAt: string;
+}
+
 export interface DashboardConfig {
   jiraBaseUrl: string;
   projectKey: string;

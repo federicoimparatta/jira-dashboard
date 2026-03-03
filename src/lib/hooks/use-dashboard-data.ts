@@ -37,3 +37,11 @@ export function useInitiativesData() {
     dedupingInterval: 60_000,
   });
 }
+
+export function useVelocityData() {
+  return useSWR("/api/jira/velocity", fetcher, {
+    refreshInterval: 300_000, // Poll every 5 minutes (historical data)
+    revalidateOnFocus: true,
+    dedupingInterval: 120_000,
+  });
+}
