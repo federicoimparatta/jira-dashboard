@@ -22,7 +22,7 @@ export async function GET() {
     const [epics, ...boardResults] = await Promise.all([
       fetchAllIssues(
         `issuetype = Epic AND statusCategory != Done AND project = ${config.projectKey} ORDER BY priority ASC, updated DESC`,
-        ["summary", "status", "assignee", "priority", "issuetype", "updated", "parent"]
+        ["summary", "status", "assignee", "priority", "issuetype", "updated", "parent", "description"]
       ),
       ...config.boardIds.map(async (boardId) => {
         const [boardEpics, boardName] = await Promise.all([
@@ -46,7 +46,7 @@ export async function GET() {
           boardId: id,
           boardName: boardResults[i]?.boardName || `Board ${id}`,
           epics: [],
-          summary: { totalEpics: 0, totalChildIssues: 0, totalDoneChildIssues: 0, avgCompletionRate: 0 },
+          summary: { totalEpics: 0, totalChildIssues: 0, totalDoneChildIssues: 0, avgCompletionRate: 0, readyEpics: 0 },
         })),
         ungrouped: [],
         summary: { totalEpics: 0, avgCompletionRate: 0, totalChildIssues: 0, totalDoneChildIssues: 0 },
@@ -126,6 +126,17 @@ export async function GET() {
       }
 
       const epicParent = epic.fields.parent as { key: string; fields?: { summary?: string } } | undefined;
+
+      const criteria = {
+        hasDescription: Boolean(epic.fields.description),
+        hasStoryPoints: storyPoints.total > 0,
+        hasPriority: epic.fields.priority.name !== "Medium",
+        hasInitiative: Boolean(epicParent?.key),
+        hasAssignee: Boolean(epic.fields.assignee),
+        hasChildren: rawChildren.length > 0,
+      };
+      const score = Object.values(criteria).filter(Boolean).length;
+
       return {
         key: epic.key,
         summary: epic.fields.summary,
@@ -137,6 +148,7 @@ export async function GET() {
         updated: epic.fields.updated,
         children: childList,
         boardIds: epicBoardMap.get(epic.key) || [],
+        readiness: { score, criteria },
         ...(epicParent?.key && {
           initiative: { key: epicParent.key, summary: epicParent.fields?.summary || epicParent.key },
         }),
@@ -168,6 +180,7 @@ export async function GET() {
     const ungrouped = epicProgressList.filter((e) => e.boardIds.length === 0);
     const totalChildIssues = epicProgressList.reduce((s, e) => s + e.childIssues.total, 0);
     const totalDoneChildIssues = epicProgressList.reduce((s, e) => s + e.childIssues.done, 0);
+    const readyEpics = epicProgressList.filter((e) => e.readiness.score === 6).length;
 
     return {
       boards,
@@ -177,6 +190,7 @@ export async function GET() {
         avgCompletionRate: totalChildIssues > 0 ? totalDoneChildIssues / totalChildIssues : 0,
         totalChildIssues,
         totalDoneChildIssues,
+        readyEpics,
       },
       jiraBaseUrl: config.jiraBaseUrl,
       fetchedAt: new Date().toISOString(),

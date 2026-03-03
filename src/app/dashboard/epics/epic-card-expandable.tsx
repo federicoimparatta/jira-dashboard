@@ -11,6 +11,82 @@ const statusBadgeColors: Record<string, string> = {
   new: "bg-smg-gray-100 text-smg-gray-500",
 };
 
+const readinessLabels: { key: keyof EpicProgress["readiness"]["criteria"]; label: string }[] = [
+  { key: "hasDescription", label: "Description" },
+  { key: "hasStoryPoints", label: "Story points" },
+  { key: "hasPriority", label: "Priority" },
+  { key: "hasInitiative", label: "Initiative" },
+  { key: "hasAssignee", label: "Assignee" },
+  { key: "hasChildren", label: "Child issues" },
+];
+
+function ReadinessDots({ readiness }: { readiness: EpicProgress["readiness"] }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const color =
+    readiness.score === 6
+      ? "text-smg-teal"
+      : readiness.score >= 3
+        ? "text-smg-warning"
+        : "text-smg-danger";
+
+  return (
+    <div
+      className="relative flex items-center"
+      tabIndex={0}
+      role="img"
+      aria-label={`Epic readiness: ${readiness.score} of 6 criteria met`}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onFocus={() => setShowTooltip(true)}
+      onBlur={() => setShowTooltip(false)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setShowTooltip((prev) => !prev);
+      }}
+    >
+      <div className={`flex items-center gap-0.5 ${color}`}>
+        {readinessLabels.map(({ key }) => (
+          <span
+            key={key}
+            className={`inline-block h-2 w-2 rounded-full ${
+              readiness.criteria[key]
+                ? "bg-current"
+                : "ring-1 ring-current"
+            }`}
+          />
+        ))}
+      </div>
+
+      {showTooltip && (
+        <div className="absolute left-1/2 top-full z-50 mt-2 min-w-[180px] -translate-x-1/2 rounded-xl border border-smg-gray-100 bg-white p-3 shadow-lg">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-smg-gray-500">
+              Epic Readiness
+            </span>
+            <span className={`text-[11px] font-bold ${color}`}>
+              {readiness.score}/6
+            </span>
+          </div>
+          <div className="mt-2 space-y-1">
+            {readinessLabels.map(({ key, label }) => (
+              <div
+                key={key}
+                className="flex items-center gap-2 text-[11px]"
+              >
+                <span className={readiness.criteria[key] ? "text-smg-teal" : "text-smg-danger"}>
+                  {readiness.criteria[key] ? "\u2714" : "\u2718"}
+                </span>
+                <span className="text-smg-gray-700">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChildIssueRow({ child, jiraBaseUrl }: { child: ChildIssue; jiraBaseUrl?: string }) {
   const badgeColor =
     statusBadgeColors[child.status.categoryKey] || statusBadgeColors.new;
@@ -74,6 +150,7 @@ export function ExpandableEpicCard({ epic, jiraBaseUrl }: { epic: EpicProgress; 
             <span className="truncate font-medium text-smg-gray-700">
               {epic.summary}
             </span>
+            <ReadinessDots readiness={epic.readiness} />
           </div>
           <div className="mt-1 flex items-center gap-3 text-xs text-smg-gray-500">
             <span>{epic.assignee || "Unassigned"}</span>

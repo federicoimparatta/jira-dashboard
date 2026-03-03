@@ -4,12 +4,14 @@ export interface EpicFilters {
   search: string;
   status: string; // "all" | specific status name
   team: string; // "all" | specific boardId
+  readiness: "all" | "ready" | "partial" | "not-ready";
 }
 
 export const DEFAULT_FILTERS: EpicFilters = {
   search: "",
   status: "all",
   team: "all",
+  readiness: "all",
 };
 
 interface EpicsFilterBarProps {
@@ -28,7 +30,8 @@ export function EpicsFilterBar({
   const hasActiveFilters =
     filters.search !== "" ||
     filters.status !== "all" ||
-    filters.team !== "all";
+    filters.team !== "all" ||
+    filters.readiness !== "all";
 
   return (
     <div className="smg-card flex flex-wrap items-center gap-3 p-4">
@@ -91,6 +94,23 @@ export function EpicsFilterBar({
           ))}
         </select>
       )}
+
+      {/* Readiness filter */}
+      <select
+        value={filters.readiness}
+        onChange={(e) =>
+          onFiltersChange({
+            ...filters,
+            readiness: e.target.value as EpicFilters["readiness"],
+          })
+        }
+        className="rounded-lg border border-smg-gray-200 bg-white px-3 py-2 text-sm text-smg-gray-700 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
+      >
+        <option value="all">All readiness</option>
+        <option value="ready">Ready (6/6)</option>
+        <option value="partial">Partially ready (3–5)</option>
+        <option value="not-ready">Not ready (0–2)</option>
+      </select>
 
       {/* Clear filters */}
       {hasActiveFilters && (

@@ -21,6 +21,7 @@ interface EpicsApiResponse {
     avgCompletionRate: number;
     totalChildIssues: number;
     totalDoneChildIssues: number;
+    readyEpics: number;
   };
   jiraBaseUrl?: string;
   fetchedAt: string;
@@ -73,6 +74,12 @@ function EpicsContent() {
           return false;
         if (filters.team !== "all" && !epic.boardIds.includes(filters.team))
           return false;
+        if (filters.readiness !== "all") {
+          const s = epic.readiness.score;
+          if (filters.readiness === "ready" && s !== 6) return false;
+          if (filters.readiness === "partial" && (s < 3 || s > 5)) return false;
+          if (filters.readiness === "not-ready" && s > 2) return false;
+        }
         return true;
       }
 
@@ -121,7 +128,8 @@ function EpicsContent() {
   const hasActiveFilters =
     filters.search !== "" ||
     filters.status !== "all" ||
-    filters.team !== "all";
+    filters.team !== "all" ||
+    filters.readiness !== "all";
   const noResults =
     filteredBoards.length === 0 && filteredUngrouped.length === 0;
 
@@ -146,11 +154,29 @@ function EpicsContent() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatCard
           title="Active Epics"
           value={summary?.totalEpics ?? "\u2014"}
           subtitle="Not yet completed"
+        />
+        <StatCard
+          title="Ready for Dev"
+          value={
+            summary
+              ? `${summary.readyEpics}/${summary.totalEpics}`
+              : "\u2014"
+          }
+          subtitle="All 6 criteria met"
+          variant={
+            summary && summary.totalEpics > 0
+              ? summary.readyEpics / summary.totalEpics > 0.6
+                ? "success"
+                : summary.readyEpics / summary.totalEpics > 0.3
+                  ? "default"
+                  : "warning"
+              : "default"
+          }
         />
         <StatCard
           title="Avg Completion"
@@ -255,8 +281,8 @@ function EpicsContent() {
 function EpicsSkeleton() {
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        {[...Array(5)].map((_, i) => (
           <div key={i} className="smg-skeleton h-24" />
         ))}
       </div>

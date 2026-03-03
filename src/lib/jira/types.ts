@@ -168,6 +168,17 @@ export interface EpicProgress {
     key: string;
     summary: string;
   };
+  readiness: {
+    score: number;
+    criteria: {
+      hasDescription: boolean;
+      hasStoryPoints: boolean;
+      hasPriority: boolean;
+      hasInitiative: boolean;
+      hasAssignee: boolean;
+      hasChildren: boolean;
+    };
+  };
 }
 
 export interface BoardGroup {
