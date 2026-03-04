@@ -12,9 +12,9 @@ function getColor(score: number): string {
 }
 
 function getTextColor(score: number): string {
-  if (score > 70) return "text-smg-teal";
-  if (score > 40) return "text-smg-warning";
-  return "text-smg-danger";
+  if (score > 70) return "text-dash-teal";
+  if (score > 40) return "text-dash-warning";
+  return "text-dash-danger";
 }
 
 function getLabel(score: number): string {
@@ -85,7 +85,7 @@ export function HealthGauge({ score, size = "md" }: HealthGaugeProps) {
           <span className={`font-bold ${fontSize[size]} ${getTextColor(score)}`}>
             {score}
           </span>
-          <span className="text-xs font-medium text-smg-gray-500">/100</span>
+          <span className="text-xs font-medium text-dash-gray-500">/100</span>
         </div>
       </div>
       <span className={`text-sm font-semibold ${getTextColor(score)}`}>

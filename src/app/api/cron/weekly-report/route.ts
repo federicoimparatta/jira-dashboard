@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const config = getConfig();
+    const config = await getConfig();
 
     // Check if today is the configured report day
     const today = new Date();

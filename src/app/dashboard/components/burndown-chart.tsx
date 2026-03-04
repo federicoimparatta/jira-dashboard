@@ -18,7 +18,7 @@ interface BurndownChartProps {
 export function BurndownChart({ data }: BurndownChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-smg-gray-300">
+      <div className="flex h-64 items-center justify-center text-dash-gray-300">
         No burndown data available
       </div>
     );

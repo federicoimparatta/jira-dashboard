@@ -57,7 +57,7 @@ export function DashboardNav() {
   const isCrossBoardPage = pathname === "/dashboard/epics" || pathname === "/dashboard/initiatives" || pathname === "/dashboard/velocity";
 
   return (
-    <nav className="smg-gradient-nav shadow-lg">
+    <nav className="dash-gradient-nav shadow-lg">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-5">
@@ -82,13 +82,13 @@ export function DashboardNav() {
                 <select
                   value={selectedBoard}
                   onChange={(e) => handleBoardChange(e.target.value)}
-                  className="smg-select rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  className="dash-select rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/30"
                 >
-                  <option value="all" className="bg-smg-navy text-white">
+                  <option value="all" className="bg-dash-navy text-white">
                     All Boards
                   </option>
                   {boards.map((board) => (
-                    <option key={board.id} value={board.id} className="bg-smg-navy text-white">
+                    <option key={board.id} value={board.id} className="bg-dash-navy text-white">
                       {board.name}
                     </option>
                   ))}
@@ -114,7 +114,7 @@ export function DashboardNav() {
                   href={href}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "bg-white text-smg-navy shadow-md"
+                      ? "bg-white text-dash-navy shadow-md"
                       : "text-white/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
@@ -122,8 +122,30 @@ export function DashboardNav() {
                 </Link>
               );
             })}
-            <div className="ml-2 border-l border-white/20 pl-2">
+            <div className="ml-2 flex items-center gap-1 border-l border-white/20 pl-2">
               <PdfExportButton />
+              <Link
+                href="/setup"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                title="Change tracked boards"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </Link>
+              <button
+                onClick={async () => {
+                  await fetch("/api/auth", { method: "DELETE" });
+                  window.location.href = "/login";
+                }}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                title="Sign out"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -135,13 +157,13 @@ export function DashboardNav() {
           <select
             value={selectedBoard}
             onChange={(e) => handleBoardChange(e.target.value)}
-            className="smg-select w-full rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
+            className="dash-select w-full rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
           >
-            <option value="all" className="bg-smg-navy text-white">
+            <option value="all" className="bg-dash-navy text-white">
               All Boards
             </option>
             {boards.map((board) => (
-              <option key={board.id} value={board.id} className="bg-smg-navy text-white">
+              <option key={board.id} value={board.id} className="bg-dash-navy text-white">
                 {board.name}
               </option>
             ))}

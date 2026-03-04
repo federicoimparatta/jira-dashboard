@@ -10,7 +10,7 @@ import { desc } from "drizzle-orm";
 import { WeeklyReport } from "../jira/types";
 
 export async function compileWeeklyReport(): Promise<WeeklyReport> {
-  const config = getConfig();
+  const config = await getConfig();
   const db = getDatabase();
 
   // Fetch current sprint data

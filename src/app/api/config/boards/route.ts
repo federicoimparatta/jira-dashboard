@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getConfig, getJiraAuth } from "@/lib/jira/config";
 
 async function fetchBoardName(boardId: string): Promise<string> {
-  const config = getConfig();
-  const { email, token } = getJiraAuth();
+  const config = await getConfig();
+  const { email, token } = await getJiraAuth();
   const encoded = Buffer.from(`${email}:${token}`).toString("base64");
 
   try {
@@ -30,7 +30,7 @@ async function fetchBoardName(boardId: string): Promise<string> {
 
 export async function GET() {
   try {
-    const config = getConfig();
+    const config = await getConfig();
 
     // Fetch real board names from Jira API
     const boardPromises = config.boardIds.map(async (id) => ({

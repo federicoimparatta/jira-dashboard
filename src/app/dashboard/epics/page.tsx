@@ -121,11 +121,11 @@ function EpicsContent() {
 
   if (error || typedData?.error) {
     return (
-      <div className="smg-card border-smg-danger/20 bg-red-50 p-6">
-        <h2 className="text-lg font-semibold text-smg-danger">
+      <div className="dash-card border-dash-danger/20 bg-red-50 p-6">
+        <h2 className="text-lg font-semibold text-dash-danger">
           Failed to load epics data
         </h2>
-        <p className="mt-1 text-sm text-smg-danger/70">
+        <p className="mt-1 text-sm text-dash-danger/70">
           {typedData?.error ||
             "Unable to fetch epics. Check your environment variables."}
         </p>
@@ -147,14 +147,14 @@ function EpicsContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-smg-gray-900">
+          <h1 className="text-2xl font-bold text-dash-gray-900">
             Epics Overview
           </h1>
-          <p className="mt-1 text-sm text-smg-gray-500">
+          <p className="mt-1 text-sm text-dash-gray-500">
             Cross-board progress for all active epics
           </p>
         </div>
-        <div className="rounded-full bg-smg-gray-100 px-3 py-1 text-xs font-medium text-smg-gray-500">
+        <div className="rounded-full bg-dash-gray-100 px-3 py-1 text-xs font-medium text-dash-gray-500">
           Updated{" "}
           {typedData?.fetchedAt
             ? new Date(typedData.fetchedAt).toLocaleTimeString()
@@ -273,21 +273,21 @@ function EpicsContent() {
 
       {/* Empty state */}
       {noResults && (
-        <div className="smg-card p-8 text-center">
+        <div className="dash-card p-8 text-center">
           {hasActiveFilters ? (
             <>
-              <p className="text-sm text-smg-gray-500">
+              <p className="text-sm text-dash-gray-500">
                 No epics match your filters
               </p>
               <button
                 onClick={() => setFilters(DEFAULT_FILTERS)}
-                className="mt-3 rounded-lg px-4 py-2 text-sm font-medium text-smg-blue transition-colors hover:bg-smg-blue/5"
+                className="mt-3 rounded-lg px-4 py-2 text-sm font-medium text-dash-blue transition-colors hover:bg-dash-blue/5"
               >
                 Clear filters
               </button>
             </>
           ) : (
-            <p className="text-sm text-smg-gray-300">No active epics found</p>
+            <p className="text-sm text-dash-gray-300">No active epics found</p>
           )}
         </div>
       )}
@@ -300,12 +300,12 @@ function EpicsSkeleton() {
     <>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="smg-skeleton h-24" />
+          <div key={i} className="dash-skeleton h-24" />
         ))}
       </div>
-      <div className="smg-skeleton h-14" />
+      <div className="dash-skeleton h-14" />
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="smg-skeleton h-32" />
+        <div key={i} className="dash-skeleton h-32" />
       ))}
     </>
   );
@@ -314,7 +314,7 @@ function EpicsSkeleton() {
 function LoadingSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="smg-skeleton h-8 w-48" />
+      <div className="dash-skeleton h-8 w-48" />
       <EpicsSkeleton />
     </div>
   );

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const boardId = searchParams.get("board");
 
   return createSSEStream(async (onProgress: (e: ProgressEvent) => void) => {
-    const config = getConfig();
+    const config = await getConfig();
 
     onProgress({ stage: "init", message: "Connecting to Jira...", percent: 0 });
 

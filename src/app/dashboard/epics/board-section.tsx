@@ -73,11 +73,11 @@ export function BoardSection({
       {/* Board heading — clickable to collapse */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="mb-4 flex w-full items-center justify-between border-b border-smg-gray-100 pb-3 text-left"
+        className="mb-4 flex w-full items-center justify-between border-b border-dash-gray-100 pb-3 text-left"
       >
         <div className="flex items-center gap-2">
           <svg
-            className={`h-4 w-4 text-smg-gray-300 transition-transform duration-200 ${
+            className={`h-4 w-4 text-dash-gray-300 transition-transform duration-200 ${
               expanded ? "rotate-90" : ""
             }`}
             fill="none"
@@ -91,11 +91,11 @@ export function BoardSection({
               d="M9 5l7 7-7 7"
             />
           </svg>
-          <h2 className="text-lg font-bold text-smg-gray-900">
+          <h2 className="text-lg font-bold text-dash-gray-900">
             {board.boardName}
           </h2>
         </div>
-        <span className="text-xs text-smg-gray-500">
+        <span className="text-xs text-dash-gray-500">
           {board.summary.totalEpics} epic
           {board.summary.totalEpics !== 1 ? "s" : ""}
           {" \u2014 "}
@@ -121,10 +121,10 @@ export function BoardSection({
             <div className={hasInitiatives ? "mt-2" : ""}>
               {hasInitiatives && (
                 <div className="mb-3 flex items-center gap-2 pl-1">
-                  <span className="text-xs font-medium uppercase tracking-wide text-smg-gray-400">
+                  <span className="text-xs font-medium uppercase tracking-wide text-dash-gray-400">
                     No Initiative
                   </span>
-                  <div className="h-px flex-1 bg-smg-gray-100" />
+                  <div className="h-px flex-1 bg-dash-gray-100" />
                 </div>
               )}
               <div className="space-y-4">
@@ -176,7 +176,7 @@ function InitiativeSection({
         className="mb-3 flex w-full items-center gap-2 pl-1 text-left"
       >
         <svg
-          className={`h-3.5 w-3.5 text-smg-gray-300 transition-transform duration-200 ${
+          className={`h-3.5 w-3.5 text-dash-gray-300 transition-transform duration-200 ${
             expanded ? "rotate-90" : ""
           }`}
           fill="none"
@@ -190,7 +190,7 @@ function InitiativeSection({
             d="M9 5l7 7-7 7"
           />
         </svg>
-        <span className="rounded bg-smg-purple/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-smg-purple">
+        <span className="rounded bg-dash-purple/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dash-purple">
           Initiative
         </span>
         {jiraBaseUrl ? (
@@ -198,31 +198,31 @@ function InitiativeSection({
             href={`${jiraBaseUrl}/browse/${initiative.key}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-smg-blue hover:underline"
+            className="text-xs font-medium text-dash-blue hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {initiative.key}
           </a>
         ) : (
-          <span className="text-xs font-medium text-smg-gray-500">
+          <span className="text-xs font-medium text-dash-gray-500">
             {initiative.key}
           </span>
         )}
-        <span className="text-sm font-medium text-smg-gray-900">
+        <span className="text-sm font-medium text-dash-gray-900">
           {initiative.summary}
         </span>
         <div className="ml-auto flex items-center gap-3">
-          <span className="text-xs text-smg-gray-500">
+          <span className="text-xs text-dash-gray-500">
             {initiative.epics.length} epic{initiative.epics.length !== 1 ? "s" : ""}
           </span>
-          <span className="text-xs text-smg-gray-400">
+          <span className="text-xs text-dash-gray-400">
             {totalDone}/{totalChildIssues} done ({completionPct}%)
           </span>
         </div>
       </button>
 
       {expanded && (
-        <div className="space-y-4 border-l-2 border-smg-purple/20 pl-4">
+        <div className="space-y-4 border-l-2 border-dash-purple/20 pl-4">
           {initiative.epics.map((epic) => (
             <ExpandableEpicCard
               key={epic.key}

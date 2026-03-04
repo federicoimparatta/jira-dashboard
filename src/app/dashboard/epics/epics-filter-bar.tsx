@@ -34,11 +34,11 @@ export function EpicsFilterBar({
     filters.readiness !== "all";
 
   return (
-    <div className="smg-card flex flex-wrap items-center gap-3 p-4">
+    <div className="dash-card flex flex-wrap items-center gap-3 p-4">
       {/* Search */}
       <div className="relative flex-1 min-w-[200px]">
         <svg
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-smg-gray-300"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dash-gray-300"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -57,7 +57,7 @@ export function EpicsFilterBar({
           onChange={(e) =>
             onFiltersChange({ ...filters, search: e.target.value })
           }
-          className="w-full rounded-lg border border-smg-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-smg-gray-700 placeholder:text-smg-gray-300 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
+          className="w-full rounded-lg border border-dash-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-dash-gray-700 placeholder:text-dash-gray-300 focus:border-dash-blue focus:outline-none focus:ring-2 focus:ring-dash-blue/20"
         />
       </div>
 
@@ -67,7 +67,7 @@ export function EpicsFilterBar({
         onChange={(e) =>
           onFiltersChange({ ...filters, status: e.target.value })
         }
-        className="rounded-lg border border-smg-gray-200 bg-white px-3 py-2 text-sm text-smg-gray-700 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
+        className="rounded-lg border border-dash-gray-200 bg-white px-3 py-2 text-sm text-dash-gray-700 focus:border-dash-blue focus:outline-none focus:ring-2 focus:ring-dash-blue/20"
       >
         <option value="all">All statuses</option>
         {statuses.map((s) => (
@@ -84,7 +84,7 @@ export function EpicsFilterBar({
           onChange={(e) =>
             onFiltersChange({ ...filters, team: e.target.value })
           }
-          className="rounded-lg border border-smg-gray-200 bg-white px-3 py-2 text-sm text-smg-gray-700 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
+          className="rounded-lg border border-dash-gray-200 bg-white px-3 py-2 text-sm text-dash-gray-700 focus:border-dash-blue focus:outline-none focus:ring-2 focus:ring-dash-blue/20"
         >
           <option value="all">All teams</option>
           {teams.map((t) => (
@@ -104,7 +104,7 @@ export function EpicsFilterBar({
             readiness: e.target.value as EpicFilters["readiness"],
           })
         }
-        className="rounded-lg border border-smg-gray-200 bg-white px-3 py-2 text-sm text-smg-gray-700 focus:border-smg-blue focus:outline-none focus:ring-2 focus:ring-smg-blue/20"
+        className="rounded-lg border border-dash-gray-200 bg-white px-3 py-2 text-sm text-dash-gray-700 focus:border-dash-blue focus:outline-none focus:ring-2 focus:ring-dash-blue/20"
       >
         <option value="all">All readiness</option>
         <option value="ready">Ready (6/6)</option>
@@ -116,7 +116,7 @@ export function EpicsFilterBar({
       {hasActiveFilters && (
         <button
           onClick={() => onFiltersChange(DEFAULT_FILTERS)}
-          className="rounded-lg px-3 py-2 text-sm font-medium text-smg-blue transition-colors hover:bg-smg-blue/5"
+          className="rounded-lg px-3 py-2 text-sm font-medium text-dash-blue transition-colors hover:bg-dash-blue/5"
         >
           Clear filters
         </button>

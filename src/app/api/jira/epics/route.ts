@@ -20,7 +20,7 @@ export const maxDuration = 300;
 
 export async function GET() {
   try {
-    const config = getConfig();
+    const config = await getConfig();
     const spField = config.storyPointsField || "customfield_10016";
     const fields = [...getIssueFields(spField), "parent"];
 

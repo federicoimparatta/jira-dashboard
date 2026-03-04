@@ -21,35 +21,35 @@ export function ProgressBar({
 
   return (
     <div>
-      <div className="flex h-3 w-full overflow-hidden rounded-full bg-smg-gray-100">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-dash-gray-100">
         <div
-          className="smg-progress-done transition-all duration-700 ease-out"
+          className="dash-progress-done transition-all duration-700 ease-out"
           style={{ width: `${donePercent}%` }}
           title={`Done: ${done} pts`}
         />
         <div
-          className="smg-progress-wip transition-all duration-700 ease-out"
+          className="dash-progress-wip transition-all duration-700 ease-out"
           style={{ width: `${inProgressPercent}%` }}
           title={`In Progress: ${inProgress} pts`}
         />
         <div
-          className="bg-smg-gray-200 transition-all duration-700 ease-out"
+          className="bg-dash-gray-200 transition-all duration-700 ease-out"
           style={{ width: `${todoPercent}%` }}
           title={`To Do: ${todo} pts`}
         />
       </div>
       {showLabels && (
         <div className="mt-3 flex gap-5 text-xs">
-          <span className="flex items-center gap-1.5 font-medium text-smg-gray-700">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-smg-teal" />
+          <span className="flex items-center gap-1.5 font-medium text-dash-gray-700">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-dash-teal" />
             Done {done} pts ({Math.round(donePercent)}%)
           </span>
-          <span className="flex items-center gap-1.5 font-medium text-smg-gray-700">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-smg-blue" />
+          <span className="flex items-center gap-1.5 font-medium text-dash-gray-700">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-dash-blue" />
             In Progress {inProgress} pts ({Math.round(inProgressPercent)}%)
           </span>
-          <span className="flex items-center gap-1.5 font-medium text-smg-gray-700">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-smg-gray-200" />
+          <span className="flex items-center gap-1.5 font-medium text-dash-gray-700">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-dash-gray-200" />
             To Do {todo} pts ({Math.round(todoPercent)}%)
           </span>
         </div>

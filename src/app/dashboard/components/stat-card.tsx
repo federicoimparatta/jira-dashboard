@@ -10,10 +10,10 @@ interface StatCardProps {
 }
 
 const variantAccents: Record<string, string> = {
-  default: "from-smg-blue to-smg-blue-light",
-  success: "from-smg-teal to-emerald-400",
-  warning: "from-smg-warning to-amber-400",
-  danger: "from-smg-danger to-rose-400",
+  default: "from-dash-blue to-dash-blue-light",
+  success: "from-dash-teal to-emerald-400",
+  warning: "from-dash-warning to-amber-400",
+  danger: "from-dash-danger to-rose-400",
 };
 
 const trendIcons = {
@@ -23,9 +23,9 @@ const trendIcons = {
 };
 
 const trendColors = {
-  up: "text-smg-teal",
-  down: "text-smg-danger",
-  flat: "text-smg-gray-500",
+  up: "text-dash-teal",
+  down: "text-dash-danger",
+  flat: "text-dash-gray-500",
 };
 
 export function StatCard({
@@ -37,15 +37,15 @@ export function StatCard({
   variant = "default",
 }: StatCardProps) {
   return (
-    <div className="smg-card relative overflow-hidden p-5">
+    <div className="dash-card relative overflow-hidden p-5">
       {/* Top accent bar */}
       <div className={`absolute inset-x-0 top-0 h-1 bg-linear-to-r ${variantAccents[variant]}`} />
 
-      <div className="text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
+      <div className="text-xs font-semibold uppercase tracking-wider text-dash-gray-500">
         {title}
       </div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-smg-gray-900">{value}</span>
+        <span className="text-3xl font-bold text-dash-gray-900">{value}</span>
         {trend && trendValue && (
           <span className={`text-sm font-semibold ${trendColors[trend]}`}>
             {trendIcons[trend]} {trendValue}
@@ -53,7 +53,7 @@ export function StatCard({
         )}
       </div>
       {subtitle && (
-        <div className="mt-1.5 text-xs text-smg-gray-500">{subtitle}</div>
+        <div className="mt-1.5 text-xs text-dash-gray-500">{subtitle}</div>
       )}
     </div>
   );

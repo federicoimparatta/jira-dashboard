@@ -10,7 +10,7 @@ export async function PUT(
     const { issueKey } = await params;
     const body = await request.json();
 
-    const config = getConfig();
+    const config = await getConfig();
 
     // Build allowed field set from config/discovery + built-in duedate
     const allowedFields = new Set<string>(["duedate"]);
@@ -40,7 +40,7 @@ export async function PUT(
       );
     }
 
-    const { email, token } = getJiraAuth();
+    const { email, token } = await getJiraAuth();
     const encoded = Buffer.from(`${email}:${token}`).toString("base64");
 
     const res = await fetch(

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const config = getConfig();
+    const config = await getConfig();
     const db = getDatabase();
     const today = new Date().toISOString().split("T")[0];
 

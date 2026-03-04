@@ -7,9 +7,9 @@ import { JiraLink } from "../components/jira-link";
 import { useEpicDateUpdate } from "@/lib/hooks/use-epic-dates";
 
 const statusBadgeColors: Record<string, string> = {
-  done: "bg-smg-teal/10 text-smg-teal",
-  indeterminate: "bg-smg-blue/10 text-smg-blue",
-  new: "bg-smg-gray-100 text-smg-gray-500",
+  done: "bg-dash-teal/10 text-dash-teal",
+  indeterminate: "bg-dash-blue/10 text-dash-blue",
+  new: "bg-dash-gray-100 text-dash-gray-500",
 };
 
 const readinessLabels: { key: keyof EpicProgress["readiness"]["criteria"]; label: string }[] = [
@@ -26,10 +26,10 @@ function ReadinessDots({ readiness }: { readiness: EpicProgress["readiness"] }) 
 
   const color =
     readiness.score === 6
-      ? "text-smg-teal"
+      ? "text-dash-teal"
       : readiness.score >= 3
-        ? "text-smg-warning"
-        : "text-smg-danger";
+        ? "text-dash-warning"
+        : "text-dash-danger";
 
   return (
     <div
@@ -60,9 +60,9 @@ function ReadinessDots({ readiness }: { readiness: EpicProgress["readiness"] }) 
       </div>
 
       {showTooltip && (
-        <div className="absolute left-1/2 top-full z-50 mt-2 min-w-[180px] -translate-x-1/2 rounded-xl border border-smg-gray-100 bg-white p-3 shadow-lg">
+        <div className="absolute left-1/2 top-full z-50 mt-2 min-w-[180px] -translate-x-1/2 rounded-xl border border-dash-gray-100 bg-white p-3 shadow-lg">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-smg-gray-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-dash-gray-500">
               Epic Readiness
             </span>
             <span className={`text-[11px] font-bold ${color}`}>
@@ -75,10 +75,10 @@ function ReadinessDots({ readiness }: { readiness: EpicProgress["readiness"] }) 
                 key={key}
                 className="flex items-center gap-2 text-[11px]"
               >
-                <span className={readiness.criteria[key] ? "text-smg-teal" : "text-smg-danger"}>
+                <span className={readiness.criteria[key] ? "text-dash-teal" : "text-dash-danger"}>
                   {readiness.criteria[key] ? "\u2714" : "\u2718"}
                 </span>
-                <span className="text-smg-gray-700">{label}</span>
+                <span className="text-dash-gray-700">{label}</span>
               </div>
             ))}
           </div>
@@ -93,13 +93,13 @@ function ChildIssueRow({ child, jiraBaseUrl }: { child: ChildIssue; jiraBaseUrl?
     statusBadgeColors[child.status.categoryKey] || statusBadgeColors.new;
 
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-smg-gray-50 px-4 py-2.5">
+    <div className="flex items-center gap-3 rounded-lg bg-dash-gray-50 px-4 py-2.5">
       <JiraLink
         issueKey={child.key}
         jiraBaseUrl={jiraBaseUrl}
-        className="shrink-0 text-xs font-semibold text-smg-blue"
+        className="shrink-0 text-xs font-semibold text-dash-blue"
       />
-      <span className="min-w-0 flex-1 truncate text-sm text-smg-gray-700">
+      <span className="min-w-0 flex-1 truncate text-sm text-dash-gray-700">
         {child.summary}
       </span>
       <span
@@ -107,11 +107,11 @@ function ChildIssueRow({ child, jiraBaseUrl }: { child: ChildIssue; jiraBaseUrl?
       >
         {child.status.name}
       </span>
-      <span className="shrink-0 text-xs text-smg-gray-500 w-24 text-right">
+      <span className="shrink-0 text-xs text-dash-gray-500 w-24 text-right">
         {child.assignee || "Unassigned"}
       </span>
       {child.storyPoints > 0 && (
-        <span className="shrink-0 rounded bg-smg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-smg-gray-700">
+        <span className="shrink-0 rounded bg-dash-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-dash-gray-700">
           {child.storyPoints} pts
         </span>
       )}
@@ -240,8 +240,8 @@ function DateChip({
         }}
         className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs transition-colors ${
           value
-            ? "text-smg-gray-500 hover:bg-smg-gray-100 hover:text-smg-gray-700"
-            : "text-smg-gray-300 hover:bg-smg-gray-50 hover:text-smg-blue"
+            ? "text-dash-gray-500 hover:bg-dash-gray-100 hover:text-dash-gray-700"
+            : "text-dash-gray-300 hover:bg-dash-gray-50 hover:text-dash-blue"
         }`}
       >
         <CalendarIcon />
@@ -255,10 +255,10 @@ function DateChip({
       {open && (
         <div
           ref={popoverRef}
-          className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-smg-gray-100 bg-white p-4 shadow-lg"
+          className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-dash-gray-100 bg-white p-4 shadow-lg"
           onClick={(e) => e.stopPropagation()}
         >
-          <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-smg-gray-500">
+          <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-dash-gray-500">
             {label} Date
           </label>
           <div className="flex items-center gap-2">
@@ -267,12 +267,12 @@ function DateChip({
               type="date"
               value={dateValue}
               onChange={(e) => setDateValue(e.target.value)}
-              className="flex-1 rounded-lg border border-smg-gray-200 px-3 py-2 text-sm text-smg-gray-700 outline-none transition-colors focus:border-smg-blue focus:ring-1 focus:ring-smg-blue/20"
+              className="flex-1 rounded-lg border border-dash-gray-200 px-3 py-2 text-sm text-dash-gray-700 outline-none transition-colors focus:border-dash-blue focus:ring-1 focus:ring-dash-blue/20"
             />
             {dateValue && (
               <button
                 onClick={handleClear}
-                className="rounded-lg px-2 py-2 text-xs text-smg-gray-500 transition-colors hover:bg-smg-gray-50 hover:text-smg-danger"
+                className="rounded-lg px-2 py-2 text-xs text-dash-gray-500 transition-colors hover:bg-dash-gray-50 hover:text-dash-danger"
               >
                 Clear
               </button>
@@ -280,20 +280,20 @@ function DateChip({
           </div>
 
           {(validationError || error) && (
-            <p className="mt-2 text-[11px] text-smg-danger">{validationError || error}</p>
+            <p className="mt-2 text-[11px] text-dash-danger">{validationError || error}</p>
           )}
 
           <div className="mt-3 flex items-center justify-end gap-2">
             <button
               onClick={handleClose}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-smg-gray-500 transition-colors hover:bg-smg-gray-50"
+              className="rounded-lg px-3 py-1.5 text-xs font-medium text-dash-gray-500 transition-colors hover:bg-dash-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={!!validationError || saving}
-              className="flex items-center gap-1.5 rounded-lg bg-smg-blue px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-smg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-dash-blue px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-dash-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving && (
                 <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -336,7 +336,7 @@ export function ExpandableEpicCard({
       : 0;
 
   return (
-    <div className="smg-card p-6">
+    <div className="dash-card p-6">
       {/* Epic header row — clickable */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -347,27 +347,27 @@ export function ExpandableEpicCard({
             <JiraLink
               issueKey={epic.key}
               jiraBaseUrl={jiraBaseUrl}
-              className="shrink-0 font-semibold text-smg-blue"
+              className="shrink-0 font-semibold text-dash-blue"
             />
-            <span className="truncate font-medium text-smg-gray-700">
+            <span className="truncate font-medium text-dash-gray-700">
               {epic.summary}
             </span>
             <ReadinessDots readiness={epic.readiness} />
           </div>
-          <div className="mt-1 flex items-center gap-3 text-xs text-smg-gray-500">
+          <div className="mt-1 flex items-center gap-3 text-xs text-dash-gray-500">
             <span>{epic.assignee || "Unassigned"}</span>
-            <span className="text-smg-gray-200">|</span>
+            <span className="text-dash-gray-200">|</span>
             <span>{epic.status.name}</span>
-            <span className="text-smg-gray-200">|</span>
+            <span className="text-dash-gray-200">|</span>
             <span>{epic.priority.name}</span>
           </div>
         </div>
         <div className="ml-4 flex shrink-0 items-center gap-2">
-          <span className="text-sm font-semibold text-smg-blue">
+          <span className="text-sm font-semibold text-dash-blue">
             {completionPercent}%
           </span>
           <svg
-            className={`h-4 w-4 text-smg-gray-300 transition-transform duration-200 ${
+            className={`h-4 w-4 text-dash-gray-300 transition-transform duration-200 ${
               expanded ? "rotate-90" : ""
             }`}
             fill="none"
@@ -406,16 +406,16 @@ export function ExpandableEpicCard({
       </div>
 
       {/* Bottom stats row */}
-      <div className="mt-3 flex items-center gap-6 text-xs text-smg-gray-500">
+      <div className="mt-3 flex items-center gap-6 text-xs text-dash-gray-500">
         <span>
-          <span className="font-semibold text-smg-gray-700">
+          <span className="font-semibold text-dash-gray-700">
             {epic.childIssues.done}/{epic.childIssues.total}
           </span>{" "}
           issues done
         </span>
         {epic.storyPoints.total > 0 && (
           <span>
-            <span className="font-semibold text-smg-gray-700">
+            <span className="font-semibold text-dash-gray-700">
               {epic.storyPoints.done}/{epic.storyPoints.total}
             </span>{" "}
             pts done ({spCompletionPercent}%)
@@ -434,7 +434,7 @@ export function ExpandableEpicCard({
               onSaved={() => onEpicUpdated?.()}
             />
             {(epic.startDate || epic.endDate) && dateFields.startDateField && dateFields.endDateField && (
-              <span className="text-smg-gray-200">&rarr;</span>
+              <span className="text-dash-gray-200">&rarr;</span>
             )}
             <DateChip
               label="End"
@@ -452,12 +452,12 @@ export function ExpandableEpicCard({
 
       {/* Expanded child issues */}
       {expanded && (
-        <div className="mt-4 border-t border-smg-gray-100 pt-4">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-smg-gray-500">
+        <div className="mt-4 border-t border-dash-gray-100 pt-4">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-dash-gray-500">
             Child Issues ({epic.children.length})
           </div>
           {epic.children.length === 0 ? (
-            <p className="text-sm text-smg-gray-300">No child issues</p>
+            <p className="text-sm text-dash-gray-300">No child issues</p>
           ) : (
             <div className="space-y-2">
               {epic.children.map((child) => (

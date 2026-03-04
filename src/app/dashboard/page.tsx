@@ -42,11 +42,11 @@ function DashboardContent() {
 
   if (error || data?.error) {
     return (
-      <div className="smg-card border-smg-danger/20 bg-red-50 p-6">
-        <h2 className="text-lg font-semibold text-smg-danger">
+      <div className="dash-card border-dash-danger/20 bg-red-50 p-6">
+        <h2 className="text-lg font-semibold text-dash-danger">
           Failed to load sprint data
         </h2>
-        <p className="mt-1 text-sm text-smg-danger/70">
+        <p className="mt-1 text-sm text-dash-danger/70">
           {data?.error || "Unable to connect to Jira API. Check your environment variables."}
         </p>
       </div>
@@ -70,32 +70,32 @@ function DashboardContent() {
       {/* Sprint Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-smg-gray-900">
+          <h1 className="text-2xl font-bold text-dash-gray-900">
             {sprint?.name || "Sprint Dashboard"}
           </h1>
           {sprint?.startDate && sprint?.endDate && (
-            <p className="mt-1 text-sm text-smg-gray-500">
+            <p className="mt-1 text-sm text-dash-gray-500">
               {new Date(sprint.startDate).toLocaleDateString()} —{" "}
               {new Date(sprint.endDate).toLocaleDateString()}
               {sprint.goal && (
-                <span className="ml-2 text-smg-blue">
+                <span className="ml-2 text-dash-blue">
                   Goal: {sprint.goal}
                 </span>
               )}
             </p>
           )}
         </div>
-        <div className="rounded-full bg-smg-gray-100 px-3 py-1 text-xs font-medium text-smg-gray-500">
+        <div className="rounded-full bg-dash-gray-100 px-3 py-1 text-xs font-medium text-dash-gray-500">
           Updated {data?.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString() : "—"}
         </div>
       </div>
 
       {/* Sprint Progress */}
       {progress && (
-        <div className="smg-card p-6">
+        <div className="dash-card p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="smg-section-label">Sprint Progress</h2>
-            <span className="text-sm font-semibold text-smg-blue">
+            <h2 className="dash-section-label">Sprint Progress</h2>
+            <span className="text-sm font-semibold text-dash-blue">
               {Math.round(progress.completionRate * 100)}%
             </span>
           </div>
@@ -133,29 +133,29 @@ function DashboardContent() {
       </div>
 
       {/* Burndown Chart */}
-      <div className="smg-card p-6">
-        <h2 className="smg-section-label mb-4">Sprint Burndown</h2>
+      <div className="dash-card p-6">
+        <h2 className="dash-section-label mb-4">Sprint Burndown</h2>
         <BurndownChart data={burndown} />
       </div>
 
       {/* Two-column: Blockers + WIP */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Blockers */}
-        <div className="smg-card p-6">
+        <div className="dash-card p-6">
           <div className="flex items-center justify-between">
-            <h2 className="smg-section-label">Blockers</h2>
+            <h2 className="dash-section-label">Blockers</h2>
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
                 blockers.length > 0
-                  ? "bg-smg-danger/10 text-smg-danger"
-                  : "bg-smg-teal/10 text-smg-teal"
+                  ? "bg-dash-danger/10 text-dash-danger"
+                  : "bg-dash-teal/10 text-dash-teal"
               }`}
             >
               {blockers.length}
             </span>
           </div>
           {blockers.length === 0 ? (
-            <p className="mt-4 text-sm text-smg-gray-300">
+            <p className="mt-4 text-sm text-dash-gray-300">
               No blocked issues
             </p>
           ) : (
@@ -166,15 +166,15 @@ function DashboardContent() {
                     key={b.key}
                     className="flex items-start gap-2.5 text-sm"
                   >
-                    <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-smg-danger" />
+                    <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-dash-danger" />
                     <div>
                       <JiraLink
                         issueKey={b.key}
                         jiraBaseUrl={data?.jiraBaseUrl}
-                        className="font-semibold text-smg-blue"
+                        className="font-semibold text-dash-blue"
                       />{" "}
-                      <span className="text-smg-gray-700">{b.summary}</span>
-                      <div className="text-xs text-smg-gray-500">
+                      <span className="text-dash-gray-700">{b.summary}</span>
+                      <div className="text-xs text-dash-gray-500">
                         {b.assignee} — {b.status}
                       </div>
                     </div>
@@ -186,17 +186,17 @@ function DashboardContent() {
         </div>
 
         {/* WIP per Assignee */}
-        <div className="smg-card p-6">
+        <div className="dash-card p-6">
           <div className="flex items-center justify-between">
-            <h2 className="smg-section-label">WIP per Assignee</h2>
+            <h2 className="dash-section-label">WIP per Assignee</h2>
             {data?.unassignedCount > 0 && (
-              <span className="rounded-full bg-smg-warning/10 px-2.5 py-0.5 text-xs font-bold text-smg-warning">
+              <span className="rounded-full bg-dash-warning/10 px-2.5 py-0.5 text-xs font-bold text-dash-warning">
                 {data.unassignedCount} unassigned
               </span>
             )}
           </div>
           {Object.keys(wipPerAssignee).length === 0 ? (
-            <p className="mt-4 text-sm text-smg-gray-300">
+            <p className="mt-4 text-sm text-dash-gray-300">
               No in-progress issues
             </p>
           ) : (
@@ -206,19 +206,19 @@ function DashboardContent() {
               ).map(([name, wip]) => (
                 <li
                   key={name}
-                  className="flex items-center justify-between rounded-lg bg-smg-gray-50 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-lg bg-dash-gray-50 px-3 py-2 text-sm"
                 >
-                  <span className="font-medium text-smg-gray-700">{name}</span>
+                  <span className="font-medium text-dash-gray-700">{name}</span>
                   <span
                     className={`font-mono font-semibold ${
                       wip.count > 3
-                        ? "text-smg-danger"
-                        : "text-smg-gray-900"
+                        ? "text-dash-danger"
+                        : "text-dash-gray-900"
                     }`}
                   >
                     {wip.count} issues ({wip.points} pts)
                     {wip.count > 3 && (
-                      <span className="ml-1.5 rounded-full bg-smg-danger/10 px-1.5 py-0.5 text-[10px] font-bold text-smg-danger">
+                      <span className="ml-1.5 rounded-full bg-dash-danger/10 px-1.5 py-0.5 text-[10px] font-bold text-dash-danger">
                         WIP LIMIT
                       </span>
                     )}
@@ -256,13 +256,13 @@ function DashboardContent() {
 function SprintSkeleton() {
   return (
     <>
-      <div className="smg-skeleton h-24" />
+      <div className="dash-skeleton h-24" />
       <div className="grid grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="smg-skeleton h-24" />
+          <div key={i} className="dash-skeleton h-24" />
         ))}
       </div>
-      <div className="smg-skeleton h-72" />
+      <div className="dash-skeleton h-72" />
     </>
   );
 }
@@ -270,7 +270,7 @@ function SprintSkeleton() {
 function LoadingSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="smg-skeleton h-8 w-48" />
+      <div className="dash-skeleton h-8 w-48" />
       <SprintSkeleton />
     </div>
   );

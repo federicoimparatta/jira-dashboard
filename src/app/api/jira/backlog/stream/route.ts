@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const boardParam = searchParams.get("board");
 
   return createSSEStream(async (onProgress: (e: ProgressEvent) => void) => {
-    const config = getConfig();
+    const config = await getConfig();
     const spField = config.storyPointsField || "customfield_10016";
     const fields = getIssueFields(spField);
 

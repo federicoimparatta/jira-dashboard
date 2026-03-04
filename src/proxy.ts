@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const AUTH_COOKIE = "smg-auth";
+const AUTH_COOKIE = "dash-auth";
 const LOGIN_PATH = "/login";
-
-// HMAC-like token: simple hash of password + signing key
-// This is validated against the cookie value set by /api/auth
-const VALID_TOKEN = "smg_authenticated_v1";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip auth for login page, auth API, cron APIs, and static assets
+  // Skip auth for login page, auth API, setup page, cron APIs, and static assets
   if (
     pathname === LOGIN_PATH ||
     pathname === "/api/auth" ||
+    pathname === "/setup" ||
     pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico"
@@ -23,7 +20,7 @@ export function proxy(request: NextRequest) {
 
   const authCookie = request.cookies.get(AUTH_COOKIE);
 
-  if (authCookie?.value === VALID_TOKEN) {
+  if (authCookie?.value === "authenticated") {
     return NextResponse.next();
   }
 

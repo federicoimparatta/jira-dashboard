@@ -1,8 +1,8 @@
 import { getConfig, getJiraAuth } from "./config";
 import { JiraIssue, JiraSprint, ChangelogHistory } from "./types";
 
-function getHeaders(): HeadersInit {
-  const { email, token } = getJiraAuth();
+async function getHeaders(): Promise<HeadersInit> {
+  const { email, token } = await getJiraAuth();
   const encoded = Buffer.from(`${email}:${token}`).toString("base64");
   return {
     Authorization: `Basic ${encoded}`,
@@ -15,9 +15,9 @@ async function jiraFetch<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  const config = getConfig();
+  const config = await getConfig();
   const url = `${config.jiraBaseUrl}${path}`;
-  const headers = getHeaders();
+  const headers = await getHeaders();
 
   let retries = 0;
   const maxRetries = 3;
@@ -130,7 +130,7 @@ export async function fetchSprintsForBoard(
 export async function fetchSprints(
   state?: "active" | "future" | "closed"
 ): Promise<JiraSprint[]> {
-  const config = getConfig();
+  const config = await getConfig();
   return fetchSprintsForBoard(config.boardId, state);
 }
 
@@ -189,7 +189,7 @@ export async function fetchBacklogIssuesForBoard(
 export async function fetchBacklogIssues(
   fields: string[]
 ): Promise<JiraIssue[]> {
-  const config = getConfig();
+  const config = await getConfig();
   return fetchBacklogIssuesForBoard(config.boardId, fields);
 }
 

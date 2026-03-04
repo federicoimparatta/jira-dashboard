@@ -30,7 +30,7 @@ export interface VelocityProgress {
 export async function getVelocityData(
   onProgress?: (event: VelocityProgress) => void
 ): Promise<VelocityResponse> {
-  const config = getConfig();
+  const config = await getConfig();
 
   onProgress?.({
     stage: "init",

@@ -27,7 +27,7 @@ interface VelocityTrendChartProps {
 export function VelocityTrendChart({ data, avgVelocity }: VelocityTrendChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-smg-gray-300">
+      <div className="flex h-64 items-center justify-center text-dash-gray-300">
         No velocity data available
       </div>
     );
@@ -71,19 +71,19 @@ export function VelocityTrendChart({ data, avgVelocity }: VelocityTrendChartProp
             if (!active || !payload?.length) return null;
             const d = payload[0]?.payload;
             return (
-              <div className="rounded-xl border border-smg-gray-100 bg-white px-4 py-3 shadow-lg">
-                <p className="text-sm font-semibold text-smg-gray-900">{d.fullName}</p>
-                <p className="text-xs text-smg-gray-500">{d.board}</p>
-                <p className="mt-1 text-xs text-smg-gray-500">
+              <div className="rounded-xl border border-dash-gray-100 bg-white px-4 py-3 shadow-lg">
+                <p className="text-sm font-semibold text-dash-gray-900">{d.fullName}</p>
+                <p className="text-xs text-dash-gray-500">{d.board}</p>
+                <p className="mt-1 text-xs text-dash-gray-500">
                   {d.date ? new Date(d.date).toLocaleDateString() : ""}
                 </p>
                 <div className="mt-2 space-y-1">
                   <p className="text-sm">
-                    <span className="inline-block h-2 w-2 rounded-full bg-smg-blue mr-1.5" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-dash-blue mr-1.5" />
                     Velocity: <span className="font-semibold">{d.velocity} pts</span>
                   </p>
                   <p className="text-sm">
-                    <span className="inline-block h-2 w-2 rounded-full bg-smg-gray-300 mr-1.5" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-dash-gray-300 mr-1.5" />
                     Average: <span className="font-semibold">{d.average} pts</span>
                   </p>
                 </div>

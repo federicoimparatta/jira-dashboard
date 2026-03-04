@@ -8,7 +8,7 @@ export const metadata = {
 
 function NavFallback() {
   return (
-    <nav className="smg-gradient-nav shadow-lg">
+    <nav className="dash-gradient-nav shadow-lg">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-smg-gray-50">
+    <div className="min-h-screen bg-dash-gray-50">
       <Suspense fallback={<NavFallback />}>
         <DashboardNav />
       </Suspense>

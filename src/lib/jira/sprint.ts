@@ -16,7 +16,7 @@ import {
 
 // Fetch sprint data for a specific board
 export async function getActiveSprintDataForBoard(boardId: string): Promise<SprintData | null> {
-  const config = getConfig();
+  const config = await getConfig();
   const spField =
     config.storyPointsField || (await discoverAndCacheField());
   const fields = getIssueFields(spField);
@@ -27,12 +27,12 @@ export async function getActiveSprintDataForBoard(boardId: string): Promise<Spri
   const sprint = sprints[0];
   const issues = await fetchSprintIssues(sprint.id, fields);
 
-  return aggregateSprintData(sprint, issues, spField || "");
+  return await aggregateSprintData(sprint, issues, spField || "");
 }
 
 // Fetch sprint data - defaults to first board or aggregates all boards
 export async function getActiveSprintData(): Promise<SprintData | null> {
-  const config = getConfig();
+  const config = await getConfig();
 
   // If only one board, use single board approach
   if (config.boardIds.length === 1) {
@@ -72,11 +72,11 @@ export async function getActiveSprintData(): Promise<SprintData | null> {
 
   // If only one board, use single-board aggregation for backward compatibility
   if (validSprints.length === 1) {
-    return aggregateSprintData(validSprints[0].sprint, validSprints[0].issues, spField || "");
+    return await aggregateSprintData(validSprints[0].sprint, validSprints[0].issues, spField || "");
   }
 
   // Multi-board aggregation
-  return aggregateMultiBoardSprintData(validSprints, spField || "");
+  return await aggregateMultiBoardSprintData(validSprints, spField || "");
 }
 
 // Fetch per-board sprint data for the overview (All Boards) view
@@ -85,7 +85,7 @@ export async function getOverviewSprintData(
 ): Promise<{
   boards: Array<{ boardId: string; boardName: string; sprintData: SprintData }>;
 } | null> {
-  const config = getConfig();
+  const config = await getConfig();
   const spField =
     config.storyPointsField || (await discoverAndCacheField());
   const fields = getIssueFields(spField);
@@ -96,7 +96,7 @@ export async function getOverviewSprintData(
       if (sprints.length === 0) return null;
       const sprint = sprints[0];
       const issues = await fetchSprintIssues(sprint.id, fields);
-      const data = aggregateSprintData(sprint, issues, spField || "");
+      const data = await aggregateSprintData(sprint, issues, spField || "");
       return {
         boardId,
         boardName: boardNames.get(boardId) || `Board ${boardId}`,
@@ -130,12 +130,12 @@ async function discoverAndCacheField(): Promise<string | null> {
   return cachedField;
 }
 
-export function aggregateSprintData(
+export async function aggregateSprintData(
   sprint: import("./types").JiraSprint,
   issues: JiraIssue[],
   storyPointsField: string
-): SprintData {
-  const config = getConfig();
+): Promise<SprintData> {
+  const config = await getConfig();
   let completedPoints = 0;
   let inProgressPoints = 0;
   let todoPoints = 0;
@@ -203,15 +203,15 @@ export function aggregateSprintData(
 }
 
 // Aggregate sprint data from multiple boards
-export function aggregateMultiBoardSprintData(
+export async function aggregateMultiBoardSprintData(
   boardSprints: Array<{
     boardId: string;
     sprint: import("./types").JiraSprint;
     issues: JiraIssue[];
   }>,
   storyPointsField: string
-): SprintData {
-  const config = getConfig();
+): Promise<SprintData> {
+  const config = await getConfig();
 
   // Deduplicate issues by ID (in case boards share issues)
   const allIssuesMap = new Map<string, JiraIssue>();

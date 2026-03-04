@@ -1,44 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  /* SMG Primary Palette */
-  --smg-blue: #0976D6;
-  --smg-blue-dark: #214B95;
-  --smg-blue-light: #377EFB;
-  --smg-magenta: #CC36BA;
-  --smg-magenta-dark: #B81291;
-  --smg-teal: #129E8F;
-  --smg-purple: #A16AE8;
+  /* Dashboard Primary Palette */
+  --dash-blue: #0976D6;
+  --dash-blue-dark: #214B95;
+  --dash-blue-light: #377EFB;
+  --dash-magenta: #CC36BA;
+  --dash-magenta-dark: #B81291;
+  --dash-teal: #129E8F;
+  --dash-purple: #A16AE8;
 
   /* Neutrals */
-  --smg-navy: #0F1B35;
-  --smg-navy-light: #1A2D52;
-  --smg-gray-50: #F7F9FC;
-  --smg-gray-100: #EAF0F6;
-  --smg-gray-200: #D3DCE6;
-  --smg-gray-300: #B0BEC5;
-  --smg-gray-500: #6B7D8D;
-  --smg-gray-700: #3D4F5F;
-  --smg-gray-900: #1A2332;
+  --dash-navy: #0F1B35;
+  --dash-navy-light: #1A2D52;
+  --dash-gray-50: #F7F9FC;
+  --dash-gray-100: #EAF0F6;
+  --dash-gray-200: #D3DCE6;
+  --dash-gray-300: #B0BEC5;
+  --dash-gray-500: #6B7D8D;
+  --dash-gray-700: #3D4F5F;
+  --dash-gray-900: #1A2332;
 
   /* Semantic */
-  --smg-success: #129E8F;
-  --smg-warning: #E8A317;
-  --smg-danger: #E5384F;
+  --dash-success: #129E8F;
+  --dash-warning: #E8A317;
+  --dash-danger: #E5384F;
 
   /* Shadows */
-  --smg-shadow-sm: 0 1px 3px rgba(9, 118, 214, 0.06);
-  --smg-shadow: 4px 4px 24px 0 rgba(102, 102, 102, 0.06);
-  --smg-shadow-lg: 4px 4px 68px 0 rgba(102, 102, 102, 0.06);
-  --smg-shadow-glow: 0 0 20px rgba(9, 118, 214, 0.12);
+  --dash-shadow-sm: 0 1px 3px rgba(9, 118, 214, 0.06);
+  --dash-shadow: 4px 4px 24px 0 rgba(102, 102, 102, 0.06);
+  --dash-shadow-lg: 4px 4px 68px 0 rgba(102, 102, 102, 0.06);
+  --dash-shadow-glow: 0 0 20px rgba(9, 118, 214, 0.12);
 
   /* Layout */
-  --smg-radius: 16px;
-  --smg-radius-lg: 24px;
-  --smg-radius-full: 9999px;
+  --dash-radius: 16px;
+  --dash-radius-lg: 24px;
+  --dash-radius-full: 9999px;
 
-  --background: var(--smg-gray-50);
-  --foreground: var(--smg-gray-900);
+  --background: var(--dash-gray-50);
+  --foreground: var(--dash-gray-900);
 }
 
 @theme inline {
@@ -47,25 +47,25 @@
   --font-sans: var(--font-jost);
   --font-mono: var(--font-geist-mono);
 
-  /* SMG Colors for Tailwind */
-  --color-smg-blue: #0976D6;
-  --color-smg-blue-dark: #214B95;
-  --color-smg-blue-light: #377EFB;
-  --color-smg-magenta: #CC36BA;
-  --color-smg-teal: #129E8F;
-  --color-smg-purple: #A16AE8;
-  --color-smg-navy: #0F1B35;
-  --color-smg-navy-light: #1A2D52;
-  --color-smg-gray-50: #F7F9FC;
-  --color-smg-gray-100: #EAF0F6;
-  --color-smg-gray-200: #D3DCE6;
-  --color-smg-gray-300: #B0BEC5;
-  --color-smg-gray-500: #6B7D8D;
-  --color-smg-gray-700: #3D4F5F;
-  --color-smg-gray-900: #1A2332;
-  --color-smg-success: #129E8F;
-  --color-smg-warning: #E8A317;
-  --color-smg-danger: #E5384F;
+  /* Dashboard Colors for Tailwind */
+  --color-dash-blue: #0976D6;
+  --color-dash-blue-dark: #214B95;
+  --color-dash-blue-light: #377EFB;
+  --color-dash-magenta: #CC36BA;
+  --color-dash-teal: #129E8F;
+  --color-dash-purple: #A16AE8;
+  --color-dash-navy: #0F1B35;
+  --color-dash-navy-light: #1A2D52;
+  --color-dash-gray-50: #F7F9FC;
+  --color-dash-gray-100: #EAF0F6;
+  --color-dash-gray-200: #D3DCE6;
+  --color-dash-gray-300: #B0BEC5;
+  --color-dash-gray-500: #6B7D8D;
+  --color-dash-gray-700: #3D4F5F;
+  --color-dash-gray-900: #1A2332;
+  --color-dash-success: #129E8F;
+  --color-dash-warning: #E8A317;
+  --color-dash-danger: #E5384F;
 }
 
 /* Remove dark mode override - dashboard is light-themed */
@@ -78,30 +78,30 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* SMG-style gradient backgrounds */
-.smg-gradient-nav {
-  background: linear-gradient(135deg, var(--smg-navy) 0%, var(--smg-blue-dark) 100%);
+/* Dashboard-style gradient backgrounds */
+.dash-gradient-nav {
+  background: linear-gradient(135deg, var(--dash-navy) 0%, var(--dash-blue-dark) 100%);
 }
 
-.smg-gradient-accent {
-  background: linear-gradient(135deg, var(--smg-blue) 0%, var(--smg-magenta) 100%);
+.dash-gradient-accent {
+  background: linear-gradient(135deg, var(--dash-blue) 0%, var(--dash-magenta) 100%);
 }
 
-.smg-gradient-subtle {
+.dash-gradient-subtle {
   background: linear-gradient(135deg, rgba(9, 118, 214, 0.04) 0%, rgba(204, 54, 186, 0.03) 100%);
 }
 
 /* Card styling */
-.smg-card {
+.dash-card {
   background: white;
-  border-radius: var(--smg-radius);
-  box-shadow: var(--smg-shadow);
-  border: 1px solid var(--smg-gray-100);
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow);
+  border: 1px solid var(--dash-gray-100);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.smg-card:hover {
-  box-shadow: var(--smg-shadow-lg);
+.dash-card:hover {
+  box-shadow: var(--dash-shadow-lg);
 }
 
 /* Scrollbar styling */
@@ -111,20 +111,20 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--smg-gray-50);
+  background: var(--dash-gray-50);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--smg-gray-300);
-  border-radius: var(--smg-radius-full);
+  background: var(--dash-gray-300);
+  border-radius: var(--dash-radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--smg-gray-500);
+  background: var(--dash-gray-500);
 }
 
 /* Select dropdown styling */
-select.smg-select {
+select.dash-select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -133,69 +133,69 @@ select.smg-select {
 }
 
 /* Tooltip styling */
-.smg-tooltip {
-  background: var(--smg-navy);
+.dash-tooltip {
+  background: var(--dash-navy);
   color: white;
   border-radius: 10px;
-  box-shadow: var(--smg-shadow-lg);
+  box-shadow: var(--dash-shadow-lg);
   font-size: 0.8rem;
   line-height: 1.5;
 }
 
 /* Gauge conic gradient */
-.smg-gauge-ring {
+.dash-gauge-ring {
   background: conic-gradient(
-    var(--gauge-color, var(--smg-blue)) 0deg,
-    var(--gauge-color, var(--smg-blue)) var(--gauge-angle, 0deg),
-    var(--smg-gray-100) var(--gauge-angle, 0deg),
-    var(--smg-gray-100) 360deg
+    var(--gauge-color, var(--dash-blue)) 0deg,
+    var(--gauge-color, var(--dash-blue)) var(--gauge-angle, 0deg),
+    var(--dash-gray-100) var(--gauge-angle, 0deg),
+    var(--dash-gray-100) 360deg
   );
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), black calc(100% - 9px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 10px), black calc(100% - 9px));
 }
 
 /* Section label styling */
-.smg-section-label {
+.dash-section-label {
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--smg-gray-500);
+  color: var(--dash-gray-500);
 }
 
 /* Animation for loading states */
-@keyframes smg-shimmer {
+@keyframes dash-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
-.smg-skeleton {
-  background: linear-gradient(90deg, var(--smg-gray-100) 25%, var(--smg-gray-200) 50%, var(--smg-gray-100) 75%);
+.dash-skeleton {
+  background: linear-gradient(90deg, var(--dash-gray-100) 25%, var(--dash-gray-200) 50%, var(--dash-gray-100) 75%);
   background-size: 200% 100%;
-  animation: smg-shimmer 1.5s ease-in-out infinite;
-  border-radius: var(--smg-radius);
+  animation: dash-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--dash-radius);
 }
 
 /* Progress bar gradient */
-.smg-progress-done {
-  background: linear-gradient(90deg, var(--smg-teal), #17C4B0);
+.dash-progress-done {
+  background: linear-gradient(90deg, var(--dash-teal), #17C4B0);
 }
 
-.smg-progress-wip {
-  background: linear-gradient(90deg, var(--smg-blue), var(--smg-blue-light));
+.dash-progress-wip {
+  background: linear-gradient(90deg, var(--dash-blue), var(--dash-blue-light));
 }
 
 /* Modal overlay */
-.smg-modal-overlay {
+.dash-modal-overlay {
   background: rgba(15, 27, 53, 0.5);
   backdrop-filter: blur(4px);
 }
 
-@keyframes smg-modal-enter {
+@keyframes dash-modal-enter {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
-.smg-modal-enter {
-  animation: smg-modal-enter 0.2s ease-out;
+.dash-modal-enter {
+  animation: dash-modal-enter 0.2s ease-out;
 }

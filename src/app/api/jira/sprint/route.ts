@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get("board");
-    const config = getConfig();
+    const config = await getConfig();
 
     // "All Boards" overview mode
     if (boardId === "all") {
@@ -216,7 +216,7 @@ async function buildSingleBoardResponse(boardId?: string) {
         (i) => i.fields.status.statusCategory.key === "new"
       ).length,
     },
-    jiraBaseUrl: getConfig().jiraBaseUrl,
+    jiraBaseUrl: (await getConfig()).jiraBaseUrl,
     fetchedAt: new Date().toISOString(),
   };
 

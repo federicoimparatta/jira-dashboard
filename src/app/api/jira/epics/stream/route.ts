@@ -14,7 +14,7 @@ export const maxDuration = 300;
 
 export async function GET() {
   return createSSEStream(async (onProgress: (e: ProgressEvent) => void) => {
-    const config = getConfig();
+    const config = await getConfig();
     const spField = config.storyPointsField || "customfield_10016";
     const fields = [...getIssueFields(spField), "parent"];
 

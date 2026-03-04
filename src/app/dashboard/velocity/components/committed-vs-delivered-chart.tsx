@@ -28,7 +28,7 @@ interface CommittedVsDeliveredChartProps {
 export function CommittedVsDeliveredChart({ data }: CommittedVsDeliveredChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-smg-gray-300">
+      <div className="flex h-64 items-center justify-center text-dash-gray-300">
         No sprint data available
       </div>
     );
@@ -80,29 +80,29 @@ export function CommittedVsDeliveredChart({ data }: CommittedVsDeliveredChartPro
             if (!active || !payload?.length) return null;
             const d = payload[0]?.payload;
             return (
-              <div className="rounded-xl border border-smg-gray-100 bg-white px-4 py-3 shadow-lg">
-                <p className="text-sm font-semibold text-smg-gray-900">{d.fullName}</p>
-                <p className="text-xs text-smg-gray-500">{d.board}</p>
-                <p className="mt-1 text-xs text-smg-gray-500">
+              <div className="rounded-xl border border-dash-gray-100 bg-white px-4 py-3 shadow-lg">
+                <p className="text-sm font-semibold text-dash-gray-900">{d.fullName}</p>
+                <p className="text-xs text-dash-gray-500">{d.board}</p>
+                <p className="mt-1 text-xs text-dash-gray-500">
                   {d.date ? new Date(d.date).toLocaleDateString() : ""}
                 </p>
                 <div className="mt-2 space-y-1">
                   <p className="text-sm">
-                    <span className="inline-block h-2 w-2 rounded-full bg-smg-gray-300 mr-1.5" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-dash-gray-300 mr-1.5" />
                     Committed: <span className="font-semibold">{d.committed} pts</span>
                   </p>
                   <p className="text-sm">
-                    <span className="inline-block h-2 w-2 rounded-full bg-smg-teal mr-1.5" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-dash-teal mr-1.5" />
                     Delivered: <span className="font-semibold">{d.delivered} pts</span>
                   </p>
                   <p className="text-sm">
                     Delivery rate:{" "}
-                    <span className={`font-semibold ${d.deliveryRate >= 80 ? "text-smg-teal" : d.deliveryRate >= 60 ? "text-smg-warning" : "text-smg-danger"}`}>
+                    <span className={`font-semibold ${d.deliveryRate >= 80 ? "text-dash-teal" : d.deliveryRate >= 60 ? "text-dash-warning" : "text-dash-danger"}`}>
                       {d.deliveryRate}%
                     </span>
                   </p>
                   {d.scopeAdded > 0 && (
-                    <p className="text-xs text-smg-warning">
+                    <p className="text-xs text-dash-warning">
                       +{d.scopeAdded} issues added mid-sprint
                     </p>
                   )}

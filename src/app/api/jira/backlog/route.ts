@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const boardParam = searchParams.get("board");
-    const config = getConfig();
+    const config = await getConfig();
     const spField = config.storyPointsField || "customfield_10016";
 
     const fields = getIssueFields(spField);

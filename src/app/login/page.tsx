@@ -7,7 +7,9 @@ import { Suspense } from "react";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [password, setPassword] = useState("");
+  const [jiraBaseUrl, setJiraBaseUrl] = useState("");
+  const [email, setEmail] = useState("");
+  const [apiToken, setApiToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
@@ -26,31 +28,32 @@ function LoginForm() {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ jiraBaseUrl, email, apiToken }),
       });
 
       if (res.ok) {
-        const from = searchParams.get("from") || "/dashboard";
+        const from = searchParams.get("from") || "/setup";
         router.push(from);
         router.refresh();
       } else {
-        setError("Wrong password");
+        const data = await res.json();
+        setError(data.error || "Authentication failed");
         setShake(true);
-        setPassword("");
         setTimeout(() => setShake(false), 600);
-        inputRef.current?.focus();
       }
     } catch {
-      setError("Something went wrong");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
+  const isValid = jiraBaseUrl && email && apiToken;
+
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background — navy-to-blue gradient matching the nav bar */}
-      <div className="absolute inset-0 smg-gradient-nav" />
+      {/* Background */}
+      <div className="absolute inset-0 dash-gradient-nav" />
 
       {/* Subtle grid texture */}
       <div
@@ -66,7 +69,7 @@ function LoginForm() {
       <div
         className="absolute w-[500px] h-[500px] rounded-full opacity-15 blur-[120px]"
         style={{
-          background: "radial-gradient(circle, var(--smg-blue-light), transparent 70%)",
+          background: "radial-gradient(circle, var(--dash-blue-light), transparent 70%)",
           top: "20%",
           left: "50%",
           transform: "translateX(-50%)",
@@ -75,15 +78,15 @@ function LoginForm() {
 
       {/* Login card */}
       <div
-        className={`relative z-10 w-full max-w-sm mx-4 ${shake ? "animate-shake" : ""}`}
+        className={`relative z-10 w-full max-w-md mx-4 ${shake ? "animate-shake" : ""}`}
       >
-        <div className="smg-card p-8 border-smg-gray-200/50">
+        <div className="dash-card p-8 border-dash-gray-200/50">
           {/* Top accent bar */}
-          <div className="absolute inset-x-0 top-0 h-1 rounded-t-[16px] bg-linear-to-r from-smg-blue via-smg-magenta to-smg-teal" />
+          <div className="absolute inset-x-0 top-0 h-1 rounded-t-[16px] bg-linear-to-r from-dash-blue via-dash-magenta to-dash-teal" />
 
           {/* Logo / title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-smg-blue to-smg-blue-dark mb-4">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-dash-blue to-dash-blue-dark mb-4">
               <svg
                 width="24"
                 height="24"
@@ -100,44 +103,100 @@ function LoginForm() {
                 <rect x="14" y="14" width="7" height="7" rx="1" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-smg-gray-900">
-              Engineering Dashboard
+            <h1 className="text-xl font-bold text-dash-gray-900">
+              Connect to Jira
             </h1>
-            <p className="mt-1 text-sm text-smg-gray-500">
-              Enter the team password to continue
+            <p className="mt-1 text-sm text-dash-gray-500">
+              Enter your Jira Cloud credentials to get started
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-dash-gray-500 mb-1.5">
+                Jira Instance URL
+              </label>
               <input
                 ref={inputRef}
-                type="password"
-                value={password}
+                type="url"
+                value={jiraBaseUrl}
                 onChange={(e) => {
-                  setPassword(e.target.value);
+                  setJiraBaseUrl(e.target.value);
                   if (error) setError("");
                 }}
-                placeholder="Password"
-                autoComplete="current-password"
-                className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-smg-gray-900 placeholder:text-smg-gray-300 outline-none transition-all duration-200 ${
+                placeholder="https://your-team.atlassian.net"
+                className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-dash-gray-900 placeholder:text-dash-gray-300 outline-none transition-all duration-200 ${
                   error
-                    ? "border-smg-danger ring-2 ring-smg-danger/20"
-                    : "border-smg-gray-200 focus:border-smg-blue focus:ring-2 focus:ring-smg-blue/20"
+                    ? "border-dash-danger ring-2 ring-dash-danger/20"
+                    : "border-dash-gray-200 focus:border-dash-blue focus:ring-2 focus:ring-dash-blue/20"
                 }`}
               />
-              {error && (
-                <p className="mt-2 text-xs font-medium text-smg-danger">
-                  {error}
-                </p>
-              )}
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-dash-gray-500 mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="you@company.com"
+                autoComplete="email"
+                className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-dash-gray-900 placeholder:text-dash-gray-300 outline-none transition-all duration-200 ${
+                  error
+                    ? "border-dash-danger ring-2 ring-dash-danger/20"
+                    : "border-dash-gray-200 focus:border-dash-blue focus:ring-2 focus:ring-dash-blue/20"
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-dash-gray-500 mb-1.5">
+                API Token
+              </label>
+              <input
+                type="password"
+                value={apiToken}
+                onChange={(e) => {
+                  setApiToken(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Your Jira API token"
+                autoComplete="off"
+                className={`w-full px-4 py-3 rounded-xl border bg-white text-sm text-dash-gray-900 placeholder:text-dash-gray-300 outline-none transition-all duration-200 ${
+                  error
+                    ? "border-dash-danger ring-2 ring-dash-danger/20"
+                    : "border-dash-gray-200 focus:border-dash-blue focus:ring-2 focus:ring-dash-blue/20"
+                }`}
+              />
+              <p className="mt-1.5 text-[11px] text-dash-gray-500">
+                Generate one at{" "}
+                <a
+                  href="https://id.atlassian.com/manage-profile/security/api-tokens"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-dash-blue hover:underline"
+                >
+                  id.atlassian.com
+                </a>
+              </p>
+            </div>
+
+            {error && (
+              <p className="text-xs font-medium text-dash-danger bg-dash-danger/5 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
-              disabled={loading || !password}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-linear-to-r from-smg-blue to-smg-blue-light hover:shadow-lg hover:shadow-smg-blue/25 active:scale-[0.98]"
+              disabled={loading || !isValid}
+              className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-linear-to-r from-dash-blue to-dash-blue-light hover:shadow-lg hover:shadow-dash-blue/25 active:scale-[0.98]"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
@@ -161,10 +220,10 @@ function LoginForm() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  Verifying...
+                  Connecting to Jira...
                 </span>
               ) : (
-                "Continue"
+                "Connect"
               )}
             </button>
           </form>
