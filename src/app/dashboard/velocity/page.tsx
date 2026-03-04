@@ -38,6 +38,39 @@ type VelocityResponseData = {
   fetchedAt?: string;
 };
 
+type TrendDirection = "up" | "down" | "flat";
+
+const trendIcons: Record<TrendDirection, string> = { up: "↑", down: "↓", flat: "→" };
+const trendColors: Record<TrendDirection, string> = {
+  up: "text-smg-teal",
+  down: "text-smg-danger",
+  flat: "text-smg-gray-500",
+};
+
+function computeTrend(current: number, previous: number, thresholdPct = 5): TrendDirection {
+  if (previous === 0) return "flat";
+  const changePct = ((current - previous) / previous) * 100;
+  if (changePct > thresholdPct) return "up";
+  if (changePct < -thresholdPct) return "down";
+  return "flat";
+}
+
+function computeRateTrend(currentRate: number, prevRate: number, threshold = 5): TrendDirection {
+  const diff = currentRate - prevRate;
+  if (diff > threshold) return "up";
+  if (diff < -threshold) return "down";
+  return "flat";
+}
+
+function TrendArrow({ trend }: { trend: TrendDirection | null }) {
+  if (!trend || trend === "flat") return null;
+  return (
+    <span className={`ml-1 text-[11px] font-bold ${trendColors[trend]}`}>
+      {trendIcons[trend]}
+    </span>
+  );
+}
+
 function VelocityContent() {
   const swr = useVelocityData();
   const { data: rawData, error, isLoading, progress } = useStreamingData<VelocityResponseData>({
@@ -125,6 +158,20 @@ function VelocityDashboard({ data }: { data: { boards: BoardData[]; allSprints: 
     (s) => s.committedPoints > 0 && s.completedPoints / s.committedPoints < 0.7
   ).length;
 
+  // Build predecessor map: for each sprint, find its previous sprint from the same board
+  const sprintPredecessorMap = new Map<string, SprintPoint>();
+  const boardGroups = new Map<string, SprintPoint[]>();
+  for (const s of sprints) {
+    const group = boardGroups.get(s.boardId) || [];
+    group.push(s);
+    boardGroups.set(s.boardId, group);
+  }
+  for (const [, group] of boardGroups) {
+    for (let i = 1; i < group.length; i++) {
+      sprintPredecessorMap.set(`${group[i].sprintId}-${group[i].boardName}`, group[i - 1]);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -209,20 +256,29 @@ function VelocityDashboard({ data }: { data: { boards: BoardData[]; allSprints: 
             <tbody>
               {[...sprints].reverse().map((s) => {
                 const rate = s.committedPoints > 0 ? Math.round((s.completedPoints / s.committedPoints) * 100) : 0;
+                const prev = sprintPredecessorMap.get(`${s.sprintId}-${s.boardName}`);
+                const prevRate = prev && prev.committedPoints > 0 ? Math.round((prev.completedPoints / prev.committedPoints) * 100) : null;
                 return (
                   <tr key={`${s.sprintId}-${s.boardName}`} className="border-t border-smg-gray-100 hover:bg-smg-gray-50/50">
                     <td className="px-6 py-3 font-medium text-smg-gray-900">{s.sprintName}</td>
                     {boards.length > 1 && selectedBoard === "all" && (
                       <td className="px-4 py-3 text-smg-gray-500">{s.boardName}</td>
                     )}
-                    <td className="px-4 py-3 text-right font-mono text-smg-gray-700">{s.committedPoints}</td>
-                    <td className="px-4 py-3 text-right font-mono font-semibold text-smg-gray-900">{s.completedPoints}</td>
+                    <td className="px-4 py-3 text-right font-mono text-smg-gray-700">
+                      {s.committedPoints}
+                      {prev && <TrendArrow trend={computeTrend(s.committedPoints, prev.committedPoints)} />}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-semibold text-smg-gray-900">
+                      {s.completedPoints}
+                      {prev && <TrendArrow trend={computeTrend(s.completedPoints, prev.completedPoints)} />}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${
                         rate >= 80 ? "bg-smg-teal/10 text-smg-teal"
                         : rate >= 60 ? "bg-smg-warning/10 text-smg-warning"
                         : "bg-smg-danger/10 text-smg-danger"
                       }`}>{rate}%</span>
+                      {prevRate !== null && <TrendArrow trend={computeRateTrend(rate, prevRate)} />}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-smg-gray-500">{s.doneCount}/{s.issueCount}</td>
                     <td className="px-4 py-3 text-right">

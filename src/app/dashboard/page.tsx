@@ -10,6 +10,7 @@ import { ProgressBar } from "./components/progress-bar";
 import { BurndownChart } from "./components/burndown-chart";
 import { JiraLink } from "./components/jira-link";
 import { ProjectOverview } from "./components/project-overview";
+import { SprintProjection } from "./components/sprint-projection";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -70,9 +71,18 @@ function DashboardContent() {
       {/* Sprint Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-smg-gray-900">
-            {sprint?.name || "Sprint Dashboard"}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-smg-gray-900">
+              {sprint?.name || "Sprint Dashboard"}
+            </h1>
+            {sprint && progress && (
+              <SprintProjection
+                sprint={sprint}
+                progress={progress}
+                blockerCount={blockers.length}
+              />
+            )}
+          </div>
           {sprint?.startDate && sprint?.endDate && (
             <p className="mt-1 text-sm text-smg-gray-500">
               {new Date(sprint.startDate).toLocaleDateString()} —{" "}
