@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 
 export async function POST() {
-
   const databaseUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
   if (!databaseUrl) {
     return NextResponse.json({ error: "No database URL" }, { status: 500 });
   }
 
-  const sql = neon(databaseUrl);
+  const pool = new Pool({ connectionString: databaseUrl });
 
   const statements = [
     `CREATE TABLE IF NOT EXISTS "meeting_digests" (
@@ -59,12 +58,13 @@ export async function POST() {
   const results = [];
   for (const stmt of statements) {
     try {
-      await sql(stmt as unknown as TemplateStringsArray);
+      await pool.query(stmt);
       results.push({ status: "ok" });
     } catch (err) {
       results.push({ status: "error", error: String(err) });
     }
   }
 
+  await pool.end();
   return NextResponse.json({ success: true, results });
 }
