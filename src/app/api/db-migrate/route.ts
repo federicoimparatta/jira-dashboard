@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   const results = [];
   for (const stmt of statements) {
     try {
-      await sql(stmt);
+      await sql(stmt as unknown as TemplateStringsArray);
       results.push({ status: "ok" });
     } catch (err) {
       results.push({ status: "error", error: String(err) });
