@@ -38,6 +38,31 @@ function DashboardContent() {
 
   const { data: ghData, isLoading: ghLoading } = useGitHubPRStatus(issueKeys);
 
+  // These must be defined before early returns so hooks are always called in the same order
+  const issues = data?.issues || [];
+  const prStatuses = ghData?.statuses || {};
+
+  // PR Coverage computation (must be before early returns to satisfy Rules of Hooks)
+  const prCoverage = useMemo(() => {
+    if (!ghData?.configured || issues.length === 0) return null;
+    // Non-done issues that have a PR
+    const nonDone = issues.filter(
+      (i: { statusCategory: string }) => i.statusCategory !== "done"
+    );
+    const withPR = nonDone.filter(
+      (i: { key: string }) => prStatuses[i.key]?.hasPR
+    );
+    return { withPR: withPR.length, total: nonDone.length };
+  }, [ghData, issues, prStatuses]);
+
+  const prCoverageVariant = useMemo(() => {
+    if (!prCoverage || prCoverage.total === 0) return "default" as const;
+    const pct = prCoverage.withPR / prCoverage.total;
+    if (pct >= 0.8) return "success" as const;
+    if (pct >= 0.5) return "warning" as const;
+    return "danger" as const;
+  }, [prCoverage]);
+
   if (isLoading) {
     if (streamProgress) {
       return (
@@ -77,29 +102,6 @@ function DashboardContent() {
   const blockers = data?.blockers || [];
   const wipPerAssignee = data?.wipPerAssignee || {};
   const issueCount = data?.issueCount;
-  const issues = data?.issues || [];
-
-  // PR Coverage computation
-  const prStatuses = ghData?.statuses || {};
-  const prCoverage = useMemo(() => {
-    if (!ghData?.configured || issues.length === 0) return null;
-    // Non-done issues that have a PR
-    const nonDone = issues.filter(
-      (i: { statusCategory: string }) => i.statusCategory !== "done"
-    );
-    const withPR = nonDone.filter(
-      (i: { key: string }) => prStatuses[i.key]?.hasPR
-    );
-    return { withPR: withPR.length, total: nonDone.length };
-  }, [ghData, issues, prStatuses]);
-
-  const prCoverageVariant = useMemo(() => {
-    if (!prCoverage || prCoverage.total === 0) return "default" as const;
-    const pct = prCoverage.withPR / prCoverage.total;
-    if (pct >= 0.8) return "success" as const;
-    if (pct >= 0.5) return "warning" as const;
-    return "danger" as const;
-  }, [prCoverage]);
 
   return (
     <div className="space-y-6">

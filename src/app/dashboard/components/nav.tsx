@@ -47,7 +47,7 @@ export function DashboardNav() {
         setBoards([{ id: boardId, name: `Board ${boardId}` }]);
         setSelectedBoard(boardId);
       });
-  }, [searchParams]);
+  }, [searchParams, pathname, router]);
 
   const handleBoardChange = (boardId: string) => {
     setSelectedBoard(boardId);
