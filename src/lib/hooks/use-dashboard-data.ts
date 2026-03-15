@@ -62,3 +62,22 @@ export function useGitHubPRStatus(issueKeys: string[]) {
     { refreshInterval: 300_000, dedupingInterval: 120_000 }
   );
 }
+
+export function useMeetingsData(filters?: {
+  team?: string;
+  week?: string;
+  sprint?: string;
+}) {
+  const params = new URLSearchParams();
+  if (filters?.team) params.set("team", filters.team);
+  if (filters?.week) params.set("week", filters.week);
+  if (filters?.sprint) params.set("sprint", filters.sprint);
+  const qs = params.toString();
+  const url = `/api/meetings${qs ? `?${qs}` : ""}`;
+
+  return useSWR(url, fetcher, {
+    refreshInterval: 120_000,
+    revalidateOnFocus: true,
+    dedupingInterval: 60_000,
+  });
+}

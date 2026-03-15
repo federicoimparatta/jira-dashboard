@@ -7,6 +7,7 @@ import {
   real,
   timestamp,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const sprintSnapshots = pgTable("sprint_snapshots", {
@@ -63,5 +64,53 @@ export const weeklyReports = pgTable("weekly_reports", {
   id: serial("id").primaryKey(),
   reportDate: date("report_date").notNull(),
   reportJson: jsonb("report_json").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ── Meeting Intelligence (Fellow integration) ──────────────────────
+
+export const meetingDigests = pgTable("meeting_digests", {
+  id: serial("id").primaryKey(),
+  fellowMeetingId: text("fellow_meeting_id").notNull().unique(),
+  teamName: text("team_name").notNull(),
+  boardId: text("board_id"),
+  meetingTitle: text("meeting_title").notNull(),
+  meetingDate: timestamp("meeting_date").notNull(),
+  weekStart: date("week_start").notNull(),
+  sprintName: text("sprint_name"),
+  sprintId: integer("sprint_id"),
+  summary: text("summary").notNull(),
+  keyTopics: jsonb("key_topics").$type<string[]>(),
+  participantCount: integer("participant_count"),
+  fellowUrl: text("fellow_url"),
+  rawJson: jsonb("raw_json"),
+  processedAt: timestamp("processed_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const meetingBlockers = pgTable("meeting_blockers", {
+  id: serial("id").primaryKey(),
+  digestId: integer("digest_id").notNull(),
+  description: text("description").notNull(),
+  severity: text("severity").notNull().$type<"high" | "medium" | "low">(),
+  jiraIssueKey: text("jira_issue_key"),
+  status: text("status").notNull().$type<"open" | "resolved">().default("open"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const meetingActionItems = pgTable("meeting_action_items", {
+  id: serial("id").primaryKey(),
+  digestId: integer("digest_id").notNull(),
+  description: text("description").notNull(),
+  assignee: text("assignee"),
+  dueDate: date("due_date"),
+  completed: boolean("completed").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const meetingDecisions = pgTable("meeting_decisions", {
+  id: serial("id").primaryKey(),
+  digestId: integer("digest_id").notNull(),
+  description: text("description").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
