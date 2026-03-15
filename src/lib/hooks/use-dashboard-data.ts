@@ -53,3 +53,12 @@ export function useDevFlowData() {
     dedupingInterval: 120_000,
   });
 }
+
+export function useGitHubPRStatus(issueKeys: string[]) {
+  const keyParam = issueKeys.join(",");
+  return useSWR(
+    keyParam ? `/api/github/pr-status?keys=${encodeURIComponent(keyParam)}` : null,
+    fetcher,
+    { refreshInterval: 300_000, dedupingInterval: 120_000 }
+  );
+}

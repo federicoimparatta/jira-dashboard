@@ -1,15 +1,35 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { OverviewSprintResponse, BoardSprintSummary } from "@/lib/jira/types";
+import { useGitHubPRStatus } from "@/lib/hooks/use-dashboard-data";
 import { StatCard } from "./stat-card";
 import { ProgressBar } from "./progress-bar";
 import { JiraLink } from "./jira-link";
+import { GitHubSprintTable } from "./github-sprint-table";
+import type { PRStatus } from "@/lib/github/types";
 
-function BoardSprintCard({ board }: { board: BoardSprintSummary }) {
+function BoardSprintCard({
+  board,
+  prStatuses,
+  ghConfigured,
+}: {
+  board: BoardSprintSummary;
+  prStatuses: Record<string, PRStatus>;
+  ghConfigured: boolean;
+}) {
   const { sprint, progress, issueCount, blockers } = board;
   const pathname = usePathname();
+
+  // Compute PR coverage for this board's blockers (issue keys we know)
+  // We don't have per-board issue keys in the overview, but we can show
+  // aggregate PR coverage if available
+  const boardIssueKeys = blockers.map((b) => b.key);
+  const prCount = ghConfigured
+    ? boardIssueKeys.filter((k) => prStatuses[k]?.hasPR).length
+    : 0;
 
   return (
     <div className="smg-card relative overflow-hidden p-5">
@@ -66,6 +86,33 @@ function BoardSprintCard({ board }: { board: BoardSprintSummary }) {
 
 export function ProjectOverview({ data }: { data: OverviewSprintResponse }) {
   const { boards, aggregate, blockers, wipPerAssignee, unassignedCount, jiraBaseUrl } = data;
+  const issues = data.issues || [];
+
+  // GitHub PR status for all overview issues
+  const issueKeys = useMemo(
+    () => issues.map((i) => i.key),
+    [issues]
+  );
+
+  const { data: ghData, isLoading: ghLoading } = useGitHubPRStatus(issueKeys);
+  const prStatuses = (ghData?.statuses || {}) as Record<string, PRStatus>;
+  const ghConfigured = ghData?.configured !== false;
+
+  // PR coverage stat
+  const prCoverage = useMemo(() => {
+    if (!ghConfigured || !ghData || issues.length === 0) return null;
+    const nonDone = issues.filter((i) => i.statusCategory !== "done");
+    const withPR = nonDone.filter((i) => prStatuses[i.key]?.hasPR);
+    return { withPR: withPR.length, total: nonDone.length };
+  }, [ghData, ghConfigured, issues, prStatuses]);
+
+  const prCoverageVariant = useMemo(() => {
+    if (!prCoverage || prCoverage.total === 0) return "default" as const;
+    const pct = prCoverage.withPR / prCoverage.total;
+    if (pct >= 0.8) return "success" as const;
+    if (pct >= 0.5) return "warning" as const;
+    return "danger" as const;
+  }, [prCoverage]);
 
   return (
     <div className="space-y-6">
@@ -83,19 +130,24 @@ export function ProjectOverview({ data }: { data: OverviewSprintResponse }) {
           Updated{" "}
           {data.fetchedAt
             ? new Date(data.fetchedAt).toLocaleTimeString()
-            : "—"}
+            : "\u2014"}
         </div>
       </div>
 
       {/* Per-board sprint cards */}
       <div className="grid gap-4 md:grid-cols-2">
         {boards.map((board) => (
-          <BoardSprintCard key={board.boardId} board={board} />
+          <BoardSprintCard
+            key={board.boardId}
+            board={board}
+            prStatuses={prStatuses}
+            ghConfigured={ghConfigured}
+          />
         ))}
       </div>
 
       {/* Aggregate stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-4 ${prCoverage ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
         <StatCard
           title="Total Issues"
           value={aggregate.totalIssues}
@@ -118,19 +170,27 @@ export function ProjectOverview({ data }: { data: OverviewSprintResponse }) {
           value={
             aggregate.avgCycleTime != null
               ? `${aggregate.avgCycleTime.toFixed(1)}d`
-              : "—"
+              : "\u2014"
           }
-          subtitle="avg (In Progress → Done)"
+          subtitle="avg (In Progress -> Done)"
         />
         <StatCard
           title="Lead Time"
           value={
             aggregate.avgLeadTime != null
               ? `${aggregate.avgLeadTime.toFixed(1)}d`
-              : "—"
+              : "\u2014"
           }
-          subtitle="avg (Created → Done)"
+          subtitle="avg (Created -> Done)"
         />
+        {prCoverage && (
+          <StatCard
+            title="PR Coverage"
+            value={`${prCoverage.withPR}/${prCoverage.total}`}
+            subtitle="non-done issues with PR"
+            variant={prCoverageVariant}
+          />
+        )}
       </div>
 
       {/* Two-column: Blockers + WIP */}
@@ -242,6 +302,26 @@ export function ProjectOverview({ data }: { data: OverviewSprintResponse }) {
             variant={aggregate.scopeChange.net > 5 ? "danger" : "default"}
           />
         </div>
+      )}
+
+      {/* Sprint Issues + GitHub (overview) */}
+      {issues.length > 0 && ghConfigured && (
+        <>
+          {ghLoading ? (
+            <div className="smg-card p-6">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-smg-blue border-t-transparent" />
+                <span className="text-sm text-smg-gray-500">Loading GitHub data...</span>
+              </div>
+            </div>
+          ) : (
+            <GitHubSprintTable
+              issues={issues}
+              prStatuses={prStatuses}
+              jiraBaseUrl={jiraBaseUrl}
+            />
+          )}
+        </>
       )}
     </div>
   );

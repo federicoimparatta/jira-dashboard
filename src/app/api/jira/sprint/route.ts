@@ -122,9 +122,29 @@ export async function GET(request: Request) {
         }))
       );
 
+      // Flat issues array across all boards (deduplicated)
+      const issuesSeen = new Set<string>();
+      const allIssues = overviewData.boards.flatMap((b) =>
+        b.sprintData.issues
+          .filter((i) => {
+            if (issuesSeen.has(i.key)) return false;
+            issuesSeen.add(i.key);
+            return true;
+          })
+          .map((i) => ({
+            key: i.key,
+            summary: i.fields.summary,
+            status: i.fields.status.name,
+            statusCategory: i.fields.status.statusCategory.key,
+            assignee: i.fields.assignee?.displayName || null,
+            issueType: i.fields.issuetype?.name || null,
+          }))
+      );
+
       const response: OverviewSprintResponse = {
         mode: "overview",
         boards,
+        issues: allIssues,
         aggregate: {
           totalPoints,
           completedPoints,
@@ -216,6 +236,14 @@ async function buildSingleBoardResponse(boardId?: string) {
         (i) => i.fields.status.statusCategory.key === "new"
       ).length,
     },
+    issues: sprintData.issues.map((i) => ({
+      key: i.key,
+      summary: i.fields.summary,
+      status: i.fields.status.name,
+      statusCategory: i.fields.status.statusCategory.key,
+      assignee: i.fields.assignee?.displayName || null,
+      issueType: i.fields.issuetype?.name || null,
+    })),
     jiraBaseUrl: getConfig().jiraBaseUrl,
     fetchedAt: new Date().toISOString(),
   };

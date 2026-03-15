@@ -1,3 +1,14 @@
+export interface PRStatus {
+  hasPR: boolean;
+  prNumber: number | null;
+  prUrl: string | null;
+  prState: "open" | "merged" | "closed" | null;
+  repo: string | null;
+  author: string | null;
+  mergedAt: string | null;
+  draft: boolean;
+}
+
 export interface GitHubReview {
   author: string;
   state: string; // APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED | PENDING

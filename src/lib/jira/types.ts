@@ -281,9 +281,19 @@ export interface BoardSprintSummary {
   }[];
 }
 
+export interface SprintIssueLight {
+  key: string;
+  summary: string;
+  status: string;
+  statusCategory: string;
+  assignee: string | null;
+  issueType: string | null;
+}
+
 export interface OverviewSprintResponse {
   mode: "overview";
   boards: BoardSprintSummary[];
+  issues?: SprintIssueLight[];
   aggregate: {
     totalPoints: number;
     completedPoints: number;

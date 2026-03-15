@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { useSprintData } from "@/lib/hooks/use-dashboard-data";
+import { useSprintData, useGitHubPRStatus } from "@/lib/hooks/use-dashboard-data";
 import { useStreamingData } from "@/lib/hooks/use-streaming-data";
 import { DataLoadingProgress } from "./components/data-loading-progress";
 import { StatCard } from "./components/stat-card";
@@ -11,6 +11,7 @@ import { BurndownChart } from "./components/burndown-chart";
 import { JiraLink } from "./components/jira-link";
 import { ProjectOverview } from "./components/project-overview";
 import { SprintProjection } from "./components/sprint-projection";
+import { GitHubSprintTable } from "./components/github-sprint-table";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -25,6 +26,14 @@ function DashboardContent() {
     swrError: swr.error,
     streamUrl,
   });
+
+  // Extract issue keys for GitHub PR lookup
+  const issueKeys = useMemo(() => {
+    if (!data || data.mode === "overview") return [];
+    return (data.issues || []).map((i: { key: string }) => i.key);
+  }, [data]);
+
+  const { data: ghData, isLoading: ghLoading } = useGitHubPRStatus(issueKeys);
 
   if (isLoading) {
     if (streamProgress) {
@@ -65,6 +74,29 @@ function DashboardContent() {
   const blockers = data?.blockers || [];
   const wipPerAssignee = data?.wipPerAssignee || {};
   const issueCount = data?.issueCount;
+  const issues = data?.issues || [];
+
+  // PR Coverage computation
+  const prStatuses = ghData?.statuses || {};
+  const prCoverage = useMemo(() => {
+    if (!ghData?.configured || issues.length === 0) return null;
+    // Non-done issues that have a PR
+    const nonDone = issues.filter(
+      (i: { statusCategory: string }) => i.statusCategory !== "done"
+    );
+    const withPR = nonDone.filter(
+      (i: { key: string }) => prStatuses[i.key]?.hasPR
+    );
+    return { withPR: withPR.length, total: nonDone.length };
+  }, [ghData, issues, prStatuses]);
+
+  const prCoverageVariant = useMemo(() => {
+    if (!prCoverage || prCoverage.total === 0) return "default" as const;
+    const pct = prCoverage.withPR / prCoverage.total;
+    if (pct >= 0.8) return "success" as const;
+    if (pct >= 0.5) return "warning" as const;
+    return "danger" as const;
+  }, [prCoverage]);
 
   return (
     <div className="space-y-6">
@@ -96,7 +128,7 @@ function DashboardContent() {
           )}
         </div>
         <div className="rounded-full bg-smg-gray-100 px-3 py-1 text-xs font-medium text-smg-gray-500">
-          Updated {data?.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString() : "—"}
+          Updated {data?.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString() : "\u2014"}
         </div>
       </div>
 
@@ -119,27 +151,35 @@ function DashboardContent() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-4 ${prCoverage ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
         <StatCard
           title="Velocity"
-          value={progress?.completedPoints ?? "—"}
+          value={progress?.completedPoints ?? "\u2014"}
           subtitle={`of ${progress?.totalPoints ?? 0} committed`}
         />
         <StatCard
           title="Cycle Time"
-          value={data?.cycleTime != null ? `${data.cycleTime.toFixed(1)}d` : "—"}
-          subtitle="avg (In Progress → Done)"
+          value={data?.cycleTime != null ? `${data.cycleTime.toFixed(1)}d` : "\u2014"}
+          subtitle="avg (In Progress -> Done)"
         />
         <StatCard
           title="Lead Time"
-          value={data?.leadTime != null ? `${data.leadTime.toFixed(1)}d` : "—"}
-          subtitle="avg (Created → Done)"
+          value={data?.leadTime != null ? `${data.leadTime.toFixed(1)}d` : "\u2014"}
+          subtitle="avg (Created -> Done)"
         />
         <StatCard
           title="Issues"
-          value={issueCount?.total ?? "—"}
+          value={issueCount?.total ?? "\u2014"}
           subtitle={`${issueCount?.done ?? 0} done, ${issueCount?.inProgress ?? 0} in progress`}
         />
+        {prCoverage && (
+          <StatCard
+            title="PR Coverage"
+            value={`${prCoverage.withPR}/${prCoverage.total}`}
+            subtitle="non-done issues with PR"
+            variant={prCoverageVariant}
+          />
+        )}
       </div>
 
       {/* Burndown Chart */}
@@ -259,7 +299,54 @@ function DashboardContent() {
           />
         </div>
       )}
+
+      {/* Sprint Issues + GitHub */}
+      {issues.length > 0 && (
+        <GitHubSection
+          issues={issues}
+          prStatuses={prStatuses}
+          ghLoading={ghLoading}
+          ghConfigured={ghData?.configured !== false}
+          jiraBaseUrl={data?.jiraBaseUrl}
+        />
+      )}
     </div>
+  );
+}
+
+function GitHubSection({
+  issues,
+  prStatuses,
+  ghLoading,
+  ghConfigured,
+  jiraBaseUrl,
+}: {
+  issues: { key: string; summary: string; status: string; statusCategory: string; assignee: string | null; issueType: string | null }[];
+  prStatuses: Record<string, unknown>;
+  ghLoading: boolean;
+  ghConfigured: boolean;
+  jiraBaseUrl?: string;
+}) {
+  // Don't show anything if GitHub is not configured
+  if (!ghConfigured) return null;
+
+  if (ghLoading) {
+    return (
+      <div className="smg-card p-6">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-smg-blue border-t-transparent" />
+          <span className="text-sm text-smg-gray-500">Loading GitHub data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <GitHubSprintTable
+      issues={issues}
+      prStatuses={prStatuses as Record<string, import("@/lib/github/types").PRStatus>}
+      jiraBaseUrl={jiraBaseUrl}
+    />
   );
 }
 
