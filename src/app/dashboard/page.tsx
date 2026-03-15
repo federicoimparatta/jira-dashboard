@@ -239,7 +239,7 @@ function DashboardContent() {
         <div className="smg-card p-6">
           <div className="flex items-center justify-between">
             <h2 className="smg-section-label">WIP per Assignee</h2>
-            {data?.unassignedCount > 0 && (
+            {data?.unassignedCount != null && data.unassignedCount > 0 && (
               <span className="rounded-full bg-smg-warning/10 px-2.5 py-0.5 text-xs font-bold text-smg-warning">
                 {data.unassignedCount} unassigned
               </span>

@@ -14,19 +14,20 @@ function formatHoursAsDays(hours: number): string {
 }
 
 export function FlowMetricsCards({ metrics }: FlowMetricsCardsProps) {
-  const cycleTimeDays = metrics.avgPrCycleTimeHours / 24;
+  if (!metrics) return null;
+  const cycleTimeDays = (metrics.avgPrCycleTimeHours ?? 0) / 24;
 
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       <StatCard
         title="PR Cycle Time"
-        value={formatHoursAsDays(metrics.avgPrCycleTimeHours)}
+        value={formatHoursAsDays(metrics.avgPrCycleTimeHours ?? 0)}
         subtitle="Avg open to merged"
         variant={cycleTimeDays > 5 ? "danger" : cycleTimeDays > 2 ? "warning" : "success"}
       />
       <StatCard
         title="Review Wait"
-        value={formatHoursAsDays(metrics.avgReviewWaitHours)}
+        value={formatHoursAsDays(metrics.avgReviewWaitHours ?? 0)}
         subtitle="Avg to first review"
         variant={
           metrics.avgReviewWaitHours > 24

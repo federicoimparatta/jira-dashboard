@@ -38,8 +38,9 @@ function DevFlowContent() {
   const data = rawData;
 
   if (error || data?.error) {
+    const rawError = data?.error || error;
     const errorMessage =
-      data?.error || (typeof error === "string" ? error : "Failed to load data");
+      typeof rawError === "string" ? rawError : "Failed to load data";
 
     // Special case: not configured
     if (errorMessage.includes("not configured")) {
@@ -102,7 +103,8 @@ function DevFlowContent() {
   }
 
   // Collect all PRs across correlations for the cycle time chart
-  const allPrs = data.correlations.flatMap((c) => c.pullRequests);
+  const correlations = data.correlations || [];
+  const allPrs = correlations.flatMap((c) => c.pullRequests || []);
   // Deduplicate by URL
   const prMap = new Map(allPrs.map((pr) => [pr.url, pr]));
   const uniquePrs = Array.from(prMap.values());
@@ -115,8 +117,8 @@ function DevFlowContent() {
           <h1 className="text-2xl font-bold text-smg-gray-900">Dev Flow</h1>
           <p className="mt-1 text-sm text-smg-gray-500">
             GitHub + Jira correlation across{" "}
-            {data.correlations.length} sprint issues
-            {data.repos.length > 0 && ` in ${data.repos.length} repo${data.repos.length !== 1 ? "s" : ""}`}
+            {correlations.length} sprint issues
+            {(data.repos?.length ?? 0) > 0 && ` in ${data.repos.length} repo${data.repos.length !== 1 ? "s" : ""}`}
           </p>
         </div>
         <div className="rounded-full bg-smg-gray-100 px-3 py-1 text-xs font-medium text-smg-gray-500">
@@ -131,10 +133,10 @@ function DevFlowContent() {
       <FlowMetricsCards metrics={data.metrics} />
 
       {/* Bottleneck Panels */}
-      <BottleneckPanels bottlenecks={data.bottlenecks} />
+      <BottleneckPanels bottlenecks={data.bottlenecks || []} />
 
       {/* Issue PR Table */}
-      <SprintIssueTable correlations={data.correlations} />
+      <SprintIssueTable correlations={correlations} />
 
       {/* Cycle Time Distribution */}
       {uniquePrs.some((p) => p.state === "merged") && (
