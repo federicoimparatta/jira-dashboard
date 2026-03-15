@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
-import { getCronSecret } from "@/lib/jira/config";
 
-export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = getCronSecret();
-  if (authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST() {
 
   const databaseUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
   if (!databaseUrl) {
