@@ -1,6 +1,6 @@
 import type { GitHubPR, GitHubDeploy, GitHubTicketCorrelation } from "./types";
 
-const TICKET_KEY_REGEX = /ENG-\d+/gi;
+const TICKET_KEY_REGEX = /[A-Z][A-Z0-9]+-\d+/gi;
 
 /**
  * Extract ENG-XXX ticket keys from text, deduplicated and uppercased.

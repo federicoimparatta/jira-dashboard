@@ -75,8 +75,8 @@ export async function searchPRsByTicketKeys(
   // Batch keys in groups of 10
   for (let i = 0; i < keys.length; i += 10) {
     const batch = keys.slice(i, i + 10);
-    const keyQuery = batch.join("+");
-    const q = encodeURIComponent(`org:${org} ${keyQuery} is:pr`);
+    const keyQuery = batch.join(" OR ");
+    const q = encodeURIComponent(`org:${org} is:pr ${keyQuery}`);
 
     try {
       const data = await githubFetch<{
