@@ -3,8 +3,20 @@ import { Pool } from "@neondatabase/serverless";
 
 export async function POST() {
   const databaseUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    return NextResponse.json({ error: "No database URL" }, { status: 500 });
+
+  if (!databaseUrl || databaseUrl.trim().length < 10) {
+    // Return diagnostic info (without leaking the full URL)
+    return NextResponse.json({
+      error: "Invalid database URL",
+      debug: {
+        POSTGRES_URL_exists: !!process.env.POSTGRES_URL,
+        POSTGRES_URL_length: process.env.POSTGRES_URL?.length ?? 0,
+        POSTGRES_URL_prefix: process.env.POSTGRES_URL?.substring(0, 15) ?? "undefined",
+        DATABASE_URL_exists: !!process.env.DATABASE_URL,
+        DATABASE_URL_length: process.env.DATABASE_URL?.length ?? 0,
+        envKeys: Object.keys(process.env).filter(k => k.includes("POSTGRES") || k.includes("DATABASE") || k.includes("NEON")).sort(),
+      }
+    }, { status: 500 });
   }
 
   const pool = new Pool({ connectionString: databaseUrl });
