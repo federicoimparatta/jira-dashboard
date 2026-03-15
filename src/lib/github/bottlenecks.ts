@@ -128,7 +128,7 @@ export function computeBottlenecks(
 }
 
 function getLatestReviewState(
-  reviews: { state: string; submittedAt: string }[]
+  reviews: { author: string; state: string; submittedAt: string }[]
 ): string | null {
   if (reviews.length === 0) return null;
 
@@ -136,9 +136,9 @@ function getLatestReviewState(
   const byAuthor = new Map<string, { state: string; submittedAt: string }>();
   for (const r of reviews) {
     if (r.state === "COMMENTED") continue;
-    const existing = byAuthor.get(r.state);
+    const existing = byAuthor.get(r.author);
     if (!existing || new Date(r.submittedAt) > new Date(existing.submittedAt)) {
-      byAuthor.set(r.state, r);
+      byAuthor.set(r.author, r);
     }
   }
 
