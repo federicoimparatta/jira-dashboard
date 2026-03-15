@@ -15,6 +15,8 @@ export function proxy(request: NextRequest) {
     pathname === LOGIN_PATH ||
     pathname === "/api/auth" ||
     pathname.startsWith("/api/cron/") ||
+    pathname === "/api/db-migrate" ||
+    pathname === "/api/meetings/ingest" ||
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico"
   ) {
