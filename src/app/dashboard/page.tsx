@@ -28,9 +28,12 @@ function DashboardContent() {
   });
 
   // Extract issue keys for GitHub PR lookup
-  const issueKeys = useMemo(() => {
-    if (!data || data.mode === "overview") return [];
-    return (data.issues || []).map((i: { key: string }) => i.key);
+  const issueKeys = useMemo((): string[] => {
+    if (!data) return [];
+    if (data.mode === "overview") return [];
+    const issues = data.issues;
+    if (!Array.isArray(issues)) return [];
+    return issues.map((i: { key: string }) => String(i.key));
   }, [data]);
 
   const { data: ghData, isLoading: ghLoading } = useGitHubPRStatus(issueKeys);
