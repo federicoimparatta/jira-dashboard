@@ -123,6 +123,7 @@ export async function getDevFlowData(
       createdAt: item.created_at,
       mergedAt: detail?.merged_at || item.pull_request?.merged_at || null,
       headRef: detail?.head?.ref || "",
+      body: item.body ? item.body.slice(0, 500) : null,
       reviews,
       checksConclusion,
       additions: detail?.additions ?? 0,

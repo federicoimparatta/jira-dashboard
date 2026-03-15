@@ -36,8 +36,7 @@ export function correlateGitHubWithSprint(
 
   // Match PRs to issues
   for (const pr of prs) {
-    const sources = [pr.headRef, pr.title];
-    // Body is already trimmed in activity.ts, but be safe
+    const sources = [pr.headRef, pr.title, pr.body ?? ""];
     const keysFound = new Set<string>();
 
     for (const source of sources) {
