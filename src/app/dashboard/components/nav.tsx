@@ -11,6 +11,7 @@ const links = [
   { href: "/dashboard/backlog", label: "Backlog Health" },
   { href: "/dashboard/initiatives", label: "Initiatives" },
   { href: "/dashboard/epics", label: "Epics" },
+  { href: "/dashboard/devflow", label: "Dev Flow" },
 ];
 
 export function DashboardNav() {
@@ -54,7 +55,7 @@ export function DashboardNav() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const isCrossBoardPage = pathname === "/dashboard/epics" || pathname === "/dashboard/initiatives" || pathname === "/dashboard/velocity";
+  const isCrossBoardPage = pathname === "/dashboard/epics" || pathname === "/dashboard/initiatives" || pathname === "/dashboard/velocity" || pathname === "/dashboard/devflow";
 
   return (
     <nav className="smg-gradient-nav shadow-lg">
@@ -105,7 +106,7 @@ export function DashboardNav() {
                   ? pathname === "/dashboard"
                   : pathname.startsWith(link.href);
               const href =
-                link.href === "/dashboard/epics" || link.href === "/dashboard/initiatives" || link.href === "/dashboard/velocity"
+                link.href === "/dashboard/epics" || link.href === "/dashboard/initiatives" || link.href === "/dashboard/velocity" || link.href === "/dashboard/devflow"
                   ? link.href
                   : `${link.href}${selectedBoard ? `?board=${selectedBoard}` : ""}`;
               return (

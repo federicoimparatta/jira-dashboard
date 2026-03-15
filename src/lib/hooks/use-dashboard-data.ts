@@ -45,3 +45,11 @@ export function useVelocityData() {
     dedupingInterval: 120_000,
   });
 }
+
+export function useDevFlowData() {
+  return useSWR("/api/github/devflow", fetcher, {
+    refreshInterval: 300_000, // Poll every 5 minutes
+    revalidateOnFocus: true,
+    dedupingInterval: 120_000,
+  });
+}
