@@ -15,6 +15,7 @@ export interface GitHubPR {
   createdAt: string;
   mergedAt: string | null;
   headRef: string;
+  body: string | null;
   reviews: GitHubReview[];
   checksConclusion: string | null; // success | failure | neutral | etc.
   additions: number;
